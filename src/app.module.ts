@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Conecta NestJS con la base de datos MariaDB
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -29,6 +30,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       }),
       inject: [ConfigService],
     }),
+
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
