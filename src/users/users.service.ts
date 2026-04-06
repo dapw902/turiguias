@@ -5,6 +5,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+// el DTO para crear nuevos usuarios
+import { CreateUserDto } from './dto/create-user.dto';
+// importamos todo el módulo de bcrypt para la encriptación de contraseñas
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -16,7 +20,35 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  // método para obtener el listado entero de usuarios
+  async findAll(): Promise<User[]> {
+    return await this.usersRepository.find();
+  }
+
+  // método para recuperar un usuario específico
+  async findOne(id: number): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { id } });
+  }
+
+  // método para borrar a un usuario
+  async remove(id: number): Promise<void> {
+    await this.usersRepository.delete(id);
+  }
+
+  // método para crear nuevos usuarios
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    // encriptación de la contraseña
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    // creamos un usuario validando los datos con el DTO
+    const user = this.usersRepository.create({
+      //spread operator - para copiar más rápido: name, email, password, etc
+      ...createUserDto,
+      password: hashedPassword,
+    });
+    // hacermos un insert en la BBDD para registrar al usuario
+    const savedUser = await this.usersRepository.save(user);
+    // desestructuramos el objeto savedUser para excluir la contraseña de la respuesta
+    const { password, ...result } = savedUser;
+    return result;
   }
 }
