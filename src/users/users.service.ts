@@ -69,4 +69,13 @@ export class UsersService {
     const { password, ...result } = updatedUser!;
     return result;
   }
+
+  // método para buscar a un usuario por su email y verificar su contraseña
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { email },
+      // necesitamos la contraseña para verificarla durante el login
+      select: ['id', 'name', 'email', 'password', 'role', 'must_change_password'],
+    });
+  }
 }

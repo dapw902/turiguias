@@ -10,6 +10,8 @@ import { User } from './user.entity';
   // Indicamos qué entidad vamos a usar en este módulo
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [UsersController],
-  providers: [UsersService]
+  providers: [UsersService],
+  // exportamos UsersService para que otros módulos puedan usarlo
+  exports: [UsersService],
 })
 export class UsersModule {}
