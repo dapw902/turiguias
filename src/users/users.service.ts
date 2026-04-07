@@ -7,6 +7,8 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 // el DTO para crear nuevos usuarios
 import { CreateUserDto } from './dto/create-user.dto';
+// el DTO para actualizar usuarios existentes
+import { UpdateUserDto } from './dto/update-user.dto';
 // importamos todo el módulo de bcrypt para la encriptación de contraseñas
 import * as bcrypt from 'bcrypt';
 
@@ -43,12 +45,28 @@ export class UsersService {
     const user = this.usersRepository.create({
       //spread operator - para copiar más rápido: name, email, password, etc
       ...createUserDto,
+      // y sobreescribir la contraseña hasheada
       password: hashedPassword,
     });
-    // hacermos un insert en la BBDD para registrar al usuario
+    // hacermos un INSERT en la BBDD para registrar al usuario
     const savedUser = await this.usersRepository.save(user);
     // desestructuramos el objeto savedUser para excluir la contraseña de la respuesta
     const { password, ...result } = savedUser;
+    return result;
+  }
+
+  // método para actualizar usuarios existentes
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+    // si se manda nueva contraseña, se hashea antes de guardala
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+    // guardamos en la BBDD con un UPDATE
+    await this.usersRepository.update(id, updateUserDto);
+    // recuperamos los datos del usuario que se ha cambiado
+    const updatedUser = await this.usersRepository.findOne({ where: { id } });
+    // desestructuramos el objeto updatedUser para excluir la contraseña de la respuesta
+    const { password, ...result } = updatedUser!;
     return result;
   }
 }

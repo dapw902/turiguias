@@ -11,25 +11,29 @@ import {
 // Importamos UserRole para validar que el rol sea un valor válido
 import { UserRole } from '../user.entity';
 
-// Creamos un DTO para validar todos los datos necesarios en la creación de un nuevo usuario
+// Creamos un DTO para validar todos los datos al actualizar un usuario existente
 
-export class CreateUserDto {
+export class UpdateUserDto {
+  @IsOptional()
   @IsString()
-  name!: string;
+  name?: string;
 
+  @IsOptional()
   @IsEmail({}, { message: 'Introduce un email válido' })
-  email!: string;
+  email?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(8)
   // Validación adicional - para ACTIVAR en producción
   // @Matches(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/, {
   //   message: 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial'
   // })
-  password!: string;
+  password?: string;
 
+  @IsOptional()
   @IsEnum(UserRole, { message: 'Valores admitidos: admin o guide' })
-  role!: UserRole;
+  role?: UserRole;
 
   @IsOptional()
   @Matches(/^\+?[0-9\s-]{7,15}$/, {

@@ -7,11 +7,14 @@ import {
   Delete,
   Post,
   Body,
+  Patch,
 } from '@nestjs/common';
 // Importamos la entidad users
 import { UsersService } from './users.service';
 // y el DTO para crear nuevos usuarios
 import { CreateUserDto } from './dto/create-user.dto';
+// y el DTO para actualizar usuarios existentes
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -38,5 +41,10 @@ export class UsersController {
   @Post()
   create(@Body() CreateUserDto: CreateUserDto) {
     return this.usersService.create(CreateUserDto);
+  }
+
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
   }
 }
