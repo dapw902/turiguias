@@ -1,4 +1,5 @@
 // importamos los decoradores necesarios
+// UseGuards: decorador para proteger endpoints con un guard
 import {
   Controller,
   Get,
@@ -8,6 +9,7 @@ import {
   Post,
   Body,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 // Importamos la entidad users
 import { UsersService } from './users.service';
@@ -15,7 +17,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 // y el DTO para actualizar usuarios existentes
 import { UpdateUserDto } from './dto/update-user.dto';
+// JwtAuthGuard: nuestro guard que verifica el token JWT
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -39,8 +44,8 @@ export class UsersController {
   }
 
   @Post()
-  create(@Body() CreateUserDto: CreateUserDto) {
-    return this.usersService.create(CreateUserDto);
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 
   @Patch(':id')

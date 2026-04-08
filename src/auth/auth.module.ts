@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+// importamos los módulos para el controlador de autenticación y tokens JWT
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './jwt.strategy';
 // ConfigModule lee el archivo .env
 // ConfigService permite leer variables del .env donde se necesiten
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -28,7 +30,7 @@ import type { StringValue } from 'ms';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
