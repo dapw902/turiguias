@@ -11,7 +11,7 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-// Importamos la entidad users
+// Importamos el servicio
 import { UsersService } from './users.service';
 // y el DTO para crear nuevos usuarios
 import { CreateUserDto } from './dto/create-user.dto';
@@ -43,13 +43,18 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
+  // método para crear a un usuario
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
+  // método para actualizar a un usuario
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.usersService.update(id, updateUserDto);
   }
 }

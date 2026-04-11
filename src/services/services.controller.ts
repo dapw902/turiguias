@@ -1,0 +1,48 @@
+// importamos los decoradores necesarios
+// UseGuards: decorador para proteger endpoints con un guard
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Body,
+  UseGuards,
+  Delete,
+} from '@nestjs/common';
+// importamos el servicio
+import { ServicesService } from './services.service';
+// el DTO para crear y actualizar servicios
+import { CreateUpdateServiceDto } from './dto/create-update-service.dto';
+// JwtAuthGuard: nuestro guard que verifica el token JWT
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@UseGuards(JwtAuthGuard)
+@Controller('services')
+export class ServicesController {
+  constructor(private readonly servicesService: ServicesService) {}
+
+  // método para obtener el listado entero de los servicios
+  @Get()
+  findAll() {
+    return this.servicesService.findAll();
+  }
+
+  // método para recuperar un servicio específico
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.servicesService.findOne(id);
+  }
+
+  // método para recuperar crear o actualizar los servicios
+  @Post('importFromTuritop')
+  importFromTuritop(@Body() services: CreateUpdateServiceDto[]) {
+    return this.servicesService.syncServices(services);
+  }
+
+  // método para borrar un servicio
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.servicesService.remove(id);
+  }
+}

@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
+// importamos la entidad User
 import { User } from './user.entity';
 // el DTO para crear nuevos usuarios
 import { CreateUserDto } from './dto/create-user.dto';
@@ -56,7 +57,10 @@ export class UsersService {
   }
 
   // método para actualizar usuarios existentes
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'>> {
     // si se manda nueva contraseña, se hashea antes de guardala
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
@@ -75,7 +79,14 @@ export class UsersService {
     return await this.usersRepository.findOne({
       where: { email },
       // necesitamos la contraseña para verificarla durante el login
-      select: ['id', 'name', 'email', 'password', 'role', 'must_change_password'],
+      select: [
+        'id',
+        'name',
+        'email',
+        'password',
+        'role',
+        'must_change_password',
+      ],
     });
   }
 }

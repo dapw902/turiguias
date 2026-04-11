@@ -1,4 +1,4 @@
-// Importamos varios decoradores necesarios
+// Importamos varios decoradores necesarios para crear la entidad
 /* Entity - para indicar al TypeORM que esta clase representa una tabla en la BBDD
  PrimaryGeneratedColumn - para marcar la columna que es la clave primaria
  Column - para indicar el resto de columnas */
@@ -17,21 +17,21 @@ export enum UserRole {
 export class User {
   // marca id como clave primaria que se genera automáticamente
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
   // cargamos las demás columnas
   @Column({ length: 100 })
-  name: string;
+  name!: string;
   // verifica que el email no se repita
   @Column({ length: 150, unique: true })
-  email: string;
+  email!: string;
   @Column({ length: 255, select: false })
-  password: string;
+  password!: string;
   @Column({ type: 'enum', enum: UserRole, default: UserRole.GUIDE })
-  role: UserRole;
+  role!: UserRole;
   @Column({ type: 'varchar', length: 30, nullable: true })
-  phone: string | null;
+  phone!: string | null;
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  notes!: string | null;
   @Column({ default: true })
-  must_change_password: boolean;
+  must_change_password!: boolean;
 }

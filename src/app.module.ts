@@ -10,6 +10,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { GuideServicesModule } from './guide-services/guide-services.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -35,6 +37,10 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
 
     AuthModule,
+
+    GuideServicesModule,
+
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
