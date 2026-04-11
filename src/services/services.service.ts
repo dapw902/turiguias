@@ -29,7 +29,30 @@ export class ServicesService {
 
   // método para crear o actualizar servicios
   async syncServices(services: CreateUpdateServiceDto[]): Promise<void> {
-    await this.servicesRepository.upsert(services, ['turitop_product_id']);
+    // obtenemos todos los servicios que hay actualmente en la BBDD
+    const existingServices = await this.servicesRepository.find();
+
+    // IDs de TuriTop que vienen en la respuesta
+    const incomingIds = services.map(s => s.turitop_product_id);
+
+    // borramos los servicios que ya no existen en TuriTop
+    for (const existing of existingServices) {
+      if (!incomingIds.includes(existing.turitop_product_id)) {
+        await this.servicesRepository.delete(existing.id);
+      }
+    }
+
+    // creamos o actualizamos los que vienen en la respuesta
+    for (const serviceData of services) {
+      const existing = await this.servicesRepository.findOne({
+        where: { turitop_product_id: serviceData.turitop_product_id },
+      });
+      if (existing) {
+        await this.servicesRepository.update(existing.id, serviceData);
+      } else {
+        await this.servicesRepository.save(serviceData);
+      }
+    }
   }
 
   // método para eliminar un servicio
