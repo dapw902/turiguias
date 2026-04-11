@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-// Importamos la entidad users y también:
-// InjectRepository - decorador para inyectar el repositorio de una entidad concreta
+// Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
@@ -33,7 +32,7 @@ export class ServicesService {
     const existingServices = await this.servicesRepository.find();
 
     // IDs de TuriTop que vienen en la respuesta
-    const incomingIds = services.map(s => s.turitop_product_id);
+    const incomingIds = services.map((s) => s.turitop_product_id);
 
     // borramos los servicios que ya no existen en TuriTop
     for (const existing of existingServices) {

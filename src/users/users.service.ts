@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-// Importamos la entidad users y también:
-// InjectRepository - decorador para inyectar el repositorio de una entidad concreta
+// Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
@@ -52,6 +51,7 @@ export class UsersService {
     // hacermos un INSERT en la BBDD para registrar al usuario
     const savedUser = await this.usersRepository.save(user);
     // desestructuramos el objeto savedUser para excluir la contraseña de la respuesta
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = savedUser;
     return result;
   }
@@ -70,6 +70,7 @@ export class UsersService {
     // recuperamos los datos del usuario que se ha cambiado
     const updatedUser = await this.usersRepository.findOne({ where: { id } });
     // desestructuramos el objeto updatedUser para excluir la contraseña de la respuesta
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = updatedUser!;
     return result;
   }
