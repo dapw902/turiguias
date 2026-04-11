@@ -10,6 +10,7 @@ import {
   Body,
   UseGuards,
   Delete,
+  Query,
 } from '@nestjs/common';
 // importamos el servicio
 import { GuideServicesService } from './guide-services.service';
@@ -23,22 +24,16 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class GuideServicesController {
   constructor(private readonly guideServicesService: GuideServicesService) {}
 
-  // método para obtener el listado entero de las relaciones guía-servicio
+  // método para obtener relaciones guía-servicio con filtros opcionales
+  // (todos, por guía o servicio)
   @Get()
-  findAll() {
+  findAll(
+    @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
+    @Query('serviceId', new ParseIntPipe({ optional: true })) serviceId?: number,
+  ) {
+    if (userId) return this.guideServicesService.findByUser(userId);
+    if (serviceId) return this.guideServicesService.findByService(serviceId);
     return this.guideServicesService.findAll();
-  }
-
-  // método para recuperar los guías que pueden trabajar un servicio
-  @Get('service/:id')
-  findByService(@Param('id', ParseIntPipe) id: number) {
-    return this.guideServicesService.findByService(id);
-  }
-
-  // método para recuperar los servicios específico de un guia
-  @Get('user/:id')
-  findByUser(@Param('id', ParseIntPipe) id: number) {
-    return this.guideServicesService.findByUser(id);
   }
 
   // método para crear nuevas relaciones guía-servicio
