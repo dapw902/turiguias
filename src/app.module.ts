@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GuideServicesModule } from './guide-services/guide-services.module';
 import { ServicesModule } from './services/services.module';
+import { GuideAvailabilityModule } from './guide-availability/guide-availability.module';
 
 @Module({
   imports: [
@@ -41,6 +42,8 @@ import { ServicesModule } from './services/services.module';
     GuideServicesModule,
 
     ServicesModule,
+
+    GuideAvailabilityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

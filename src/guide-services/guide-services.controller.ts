@@ -28,8 +28,10 @@ export class GuideServicesController {
   // (todos, por guía o servicio)
   @Get()
   findAll(
-    @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
-    @Query('serviceId', new ParseIntPipe({ optional: true })) serviceId?: number,
+    @Query('userId', new ParseIntPipe({ optional: true }))
+    userId?: number,
+    @Query('serviceId', new ParseIntPipe({ optional: true }))
+    serviceId?: number,
   ) {
     if (userId) return this.guideServicesService.findByUser(userId);
     if (serviceId) return this.guideServicesService.findByService(serviceId);

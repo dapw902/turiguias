@@ -1,5 +1,6 @@
 // DTO que define los campos que devolvemos al frontend
 export class GuideServiceByUserResponseDto {
+  guide_id!: number;
   guide_name!: string;
   services!: {
     id: number;

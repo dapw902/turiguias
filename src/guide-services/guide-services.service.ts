@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
-// importamos la entidad Service
+// importamos la entidad GuideService
 import { GuideService } from './guide-service.entity';
 // el DTO para crear o actualizar los servicios de los guias
 import { CreateUpdateGuideServiceDto } from './dto/create-update-guide-service.dto';
@@ -13,7 +13,7 @@ import { GuideServiceByUserResponseDto } from './dto/guide-service-response.dto'
 @Injectable()
 export class GuideServicesService {
   constructor(
-    // inyectamos el repositorio de la entidad "Service"
+    // inyectamos el repositorio de la entidad "GuideService"
     @InjectRepository(GuideService)
     private readonly guideServiceRepository: Repository<GuideService>,
   ) {}
@@ -90,6 +90,7 @@ export class GuideServicesService {
     for (const gs of results) {
       if (!map.has(gs.user.id)) {
         map.set(gs.user.id, {
+          guide_id: gs.user.id,
           guide_name: gs.user.name,
           services: [],
         });
