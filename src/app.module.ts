@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { GuideServicesModule } from './guide-services/guide-services.module';
 import { ServicesModule } from './services/services.module';
 import { GuideAvailabilityModule } from './guide-availability/guide-availability.module';
+import { EventsModule } from './events/events.module';
+import { TuritopModule } from './turitop/turitop.module';
 
 @Module({
   imports: [
@@ -44,6 +46,10 @@ import { GuideAvailabilityModule } from './guide-availability/guide-availability
     ServicesModule,
 
     GuideAvailabilityModule,
+
+    EventsModule,
+
+    TuritopModule,
   ],
   controllers: [AppController],
   providers: [AppService],

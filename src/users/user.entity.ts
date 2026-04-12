@@ -21,17 +21,23 @@ export class User {
   // cargamos las demás columnas
   @Column({ length: 100 })
   name!: string;
+
   // verifica que el email no se repita
   @Column({ length: 150, unique: true })
   email!: string;
+
   @Column({ length: 255, select: false })
   password!: string;
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.GUIDE })
   role!: UserRole;
+
   @Column({ type: 'varchar', length: 30, nullable: true })
   phone!: string | null;
+
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
+
   @Column({ default: true })
   must_change_password!: boolean;
 }

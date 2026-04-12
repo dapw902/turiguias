@@ -2,7 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { GuideAvailabilityService } from './guide-availability.service';
 import { GuideAvailabilityController } from './guide-availability.controller';
 // Importamos TypeOrmModule para registrar entidades en este módulo
-// y la entidad GuideAvailability que representa la tabla guide_services
+// y la entidad GuideAvailability que representa la tabla guide_availability
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GuideAvailability } from './guide-availability.entity';
 // importamos el módulo de Guide Services

@@ -11,10 +11,13 @@ export class Service {
   // cargamos las demás columnas
   @Column({ length: 20, unique: true })
   turitop_product_id!: string;
+
   @Column({ length: 150 })
   name!: string;
+
   @Column({ default: 0 })
   duration!: number;
+
   @Column({ length: 50, default: 'UTC' })
   timezone!: string;
 }
