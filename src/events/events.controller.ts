@@ -11,9 +11,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  // método para sincronizar los servicios
+  // endpoint para sincronizar los servicios
   @Post('sync-services')
   syncServices() {
     return this.eventsService.syncServices();
+  }
+
+  // endpoint para sincronizar eventos desde TuriTop
+  @Post('sync-events')
+  syncEvents() {
+    return this.eventsService.syncEvents();
   }
 }

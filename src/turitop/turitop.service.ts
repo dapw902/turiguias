@@ -11,6 +11,11 @@ import {
   TuriTopProduct,
   TuriTopProductsResponse,
 } from './interfaces/turitop-product.interface';
+// importamos las interfaces para la llamada getevents
+import {
+  TuriTopEvent,
+  TuriTopEventsResponse,
+} from './interfaces/turitop-event.interface';
 
 @Injectable()
 export class TuritopService {
@@ -41,12 +46,7 @@ export class TuritopService {
             language_code: this.language,
           },
         },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
+        this.headers,
       ),
     );
 
@@ -54,5 +54,39 @@ export class TuritopService {
     return response.data.data.products.filter(
       (p) => !p.supplier_company_short_id && p.flow === 'tour',
     );
+  }
+
+  // método para obtener los eventos de un servicio concreto en un rango de tiempo (Unix timestamps)
+  async getEvents(
+    productShortId: string,
+    startDate: number,
+    endDate: number,
+  ): Promise<TuriTopEvent[]> {
+    const response = await firstValueFrom(
+      this.httpService.post<TuriTopEventsResponse>(
+        `${this.apiUrl}/product/tour/getevents`,
+        {
+          data: {
+            product_short_id: productShortId,
+            start_date: startDate,
+            end_date: endDate,
+            language_code: this.language,
+          },
+        },
+        this.headers,
+      ),
+    );
+
+    return response.data.data.events;
+  }
+
+  // método auxiliar para el header de autenticación para todas las llamadas a TuriTop
+  private get headers() {
+    return {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
   }
 }

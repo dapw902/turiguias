@@ -35,4 +35,37 @@ export class EventsService {
     // sincronizamos con la BBDD
     await this.servicesService.syncServices(servicesToSync);
   }
+
+  // método que sincroniza los eventos de todos los servicios desde TuriTop (ventana de 1 semana)
+  async syncEvents(): Promise<void> {
+    // obtenemos todos los servicios de la BBDD
+    const services = await this.servicesService.findAll();
+
+    // calculamos el rango de fechas: ahora hasta ahora + 7 días (en Unix timestamps)
+    const now = Math.floor(Date.now() / 1000);
+    const oneWeekLater = now + 7 * 24 * 60 * 60;
+
+    for (const service of services) {
+      // obtenemos los eventos de este servicio desde TuriTop
+      const turitopEvents = await this.turitopService.getEvents(
+        service.turitop_product_id,
+        now,
+        oneWeekLater,
+      );
+
+      // sincronizamos cada evento
+      for (const event of turitopEvents) {
+        await this.eventRepository.upsert(
+          {
+            service: { id: service.id },
+            event_time: event.time,
+            duration: service.duration,
+            capacity: 0, // se actualizará con getAvailable en el futuro
+            status: event.status,
+          },
+          ['service', 'event_time'],
+        );
+      }
+    }
+  }
 }

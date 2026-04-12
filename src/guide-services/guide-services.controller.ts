@@ -24,7 +24,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class GuideServicesController {
   constructor(private readonly guideServicesService: GuideServicesService) {}
 
-  // método para obtener relaciones guía-servicio con filtros opcionales
+  // endpoint para obtener relaciones guía-servicio con filtros opcionales
   // (todos, por guía o servicio)
   @Get()
   findAll(
@@ -38,7 +38,7 @@ export class GuideServicesController {
     return this.guideServicesService.findAll();
   }
 
-  // método para crear nuevas relaciones guía-servicio
+  // endpoint para crear nuevas relaciones guía-servicio
   @Post()
   create(@Body() guideService: CreateUpdateGuideServiceDto) {
     return this.guideServicesService.create(guideService);
@@ -53,7 +53,7 @@ export class GuideServicesController {
     return this.guideServicesService.update(id, guideService);
   }
 
-  // método para borrar una relación guía-servicio
+  // endpoint para borrar una relación guía-servicio
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.guideServicesService.remove(id);

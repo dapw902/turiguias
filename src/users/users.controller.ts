@@ -25,31 +25,31 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // método para obtener el listado entero de usuarios
+  // endpoint para obtener el listado entero de usuarios
   @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
-  // método para recuperar un usuario específico
+  // endpoint para recuperar un usuario específico
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findOne(id);
   }
 
-  // método para borrar a un usuario
+  // endpoint para borrar a un usuario
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
 
-  // método para crear a un usuario
+  // endpoint para crear a un usuario
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
-  // método para actualizar a un usuario
+  // endpoint para actualizar a un usuario
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,

@@ -25,7 +25,7 @@ export class GuideAvailabilityController {
     private readonly guideAvailabilityService: GuideAvailabilityService,
   ) {}
 
-  // método para obtener las disponibilidades con filtros opcionales
+  // endpoint para obtener las disponibilidades con filtros opcionales
   // (todos, por guía o por rango de tiempo)
   @Get()
   findAll(
@@ -43,13 +43,13 @@ export class GuideAvailabilityController {
     return this.guideAvailabilityService.findAll();
   }
 
-  // método para crear nuevas disponibilidades
+  // endpoint para crear nuevas disponibilidades
   @Post()
   create(@Body() guideAvailability: CreateGuideAvailabilityDto) {
     return this.guideAvailabilityService.create(guideAvailability);
   }
 
-  // método para borrar una disponibilidad
+  // endpoint para borrar una disponibilidad
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.guideAvailabilityService.remove(id);

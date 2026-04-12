@@ -22,25 +22,25 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  // método para obtener el listado entero de los servicios
+  // endpoint para obtener el listado entero de los servicios
   @Get()
   findAll() {
     return this.servicesService.findAll();
   }
 
-  // método para recuperar un servicio específico
+  // endpoint para recuperar un servicio específico
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.servicesService.findOne(id);
   }
 
-  // método para recuperar crear o actualizar los servicios
+  // endpoint para recuperar crear o actualizar los servicios
   @Post('importFromTuritop')
   importFromTuritop(@Body() services: CreateUpdateServiceDto[]) {
     return this.servicesService.syncServices(services);
   }
 
-  // método para borrar un servicio
+  // endpoint para borrar un servicio
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.servicesService.remove(id);
