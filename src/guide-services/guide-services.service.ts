@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
@@ -9,6 +13,8 @@ import { GuideService } from './guide-service.entity';
 import { CreateUpdateGuideServiceDto } from './dto/create-update-guide-service.dto';
 // DTO para dar forma a la respuesta de los endpoints
 import { GuideServiceByUserResponseDto } from './dto/guide-service-response.dto';
+// importamos el servicio de Servicios para recuperar la zona horaria
+import { ServicesService } from '../services/services.service';
 
 @Injectable()
 export class GuideServicesService {
@@ -16,6 +22,7 @@ export class GuideServicesService {
     // inyectamos el repositorio de la entidad "GuideService"
     @InjectRepository(GuideService)
     private readonly guideServiceRepository: Repository<GuideService>,
+    private readonly servicesService: ServicesService,
   ) {}
 
   // método para obtener el listado entero de las relaciones guía-servicio
@@ -50,11 +57,37 @@ export class GuideServicesService {
   async create(
     createUpdateGuideServiceDto: CreateUpdateGuideServiceDto,
   ): Promise<GuideService> {
-    // creamos una nueva relación entre servicio y guía
+    // verificamos que el servicio existe y obtenemos su zona horaria
+    const newService = await this.servicesService.findOne(
+      createUpdateGuideServiceDto.service_id,
+    );
+
+    if (!newService) {
+      throw new NotFoundException('El servicio no existe');
+    }
+
+    // obtenemos los servicios que ya tiene asignados el guía
+    const existingServices = await this.guideServiceRepository.find({
+      where: { user: { id: createUpdateGuideServiceDto.user_id } },
+      relations: ['service'],
+    });
+
+    // si ya tiene servicios asignados, verificamos que la zona horaria coincida
+    // un guía solo puede trabajar en una zona horaria
+    if (existingServices.length > 0) {
+      const existingTimezone = existingServices[0].service.timezone;
+      if (existingTimezone !== newService.timezone) {
+        throw new ConflictException(
+          `No se puede asignar este servicio — la zona horaria no coincide. ` +
+            `El guía trabaja en ${existingTimezone} y este servicio es ${newService.timezone}`,
+        );
+      }
+    }
+
+    // guardamos la relación usando referencias parciales a User y Service
+    // TypeORM traduce user: { id } → user_id en la BBDD
+    // y service: { id } → service_id en la BBDD
     return await this.guideServiceRepository.save({
-      // guardamos la relación usando referencias parciales a User y Service
-      // TypeORM traduce user: { id } → user_id en la BBDD
-      // y service: { id } → service_id en la BBDD
       user: { id: createUpdateGuideServiceDto.user_id },
       service: { id: createUpdateGuideServiceDto.service_id },
       capacity: createUpdateGuideServiceDto.capacity,
@@ -98,6 +131,7 @@ export class GuideServicesService {
       map.get(gs.user.id)!.services.push({
         id: gs.id,
         service_name: gs.service.name,
+        timezone: gs.service.timezone,
         capacity: gs.capacity,
       });
     }

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
@@ -9,6 +14,10 @@ import { GuideAvailability } from './guide-availability.entity';
 import { CreateGuideAvailabilityDto } from './dto/create-guide-availability.dto';
 // DTO para dar forma a la respuesta de los endpoints
 import { GuideAvailabilityByUserResponseDto } from './dto/guide-availability-response.dto';
+// importamos método para la conversión de local a UTC
+import { DateTime } from 'luxon';
+// importamos el servicio Guide Services para obtener la zona horaria del guía
+import { GuideServicesService } from '../guide-services/guide-services.service';
 
 @Injectable()
 export class GuideAvailabilityService {
@@ -16,6 +25,9 @@ export class GuideAvailabilityService {
     // inyectamos el repositorio de la entidad "GuideAvailability"
     @InjectRepository(GuideAvailability)
     private readonly guideAvailabilityRepository: Repository<GuideAvailability>,
+    // inyectamos GuideServicesService con forwardRef para evitar dependencia circular
+    @Inject(forwardRef(() => GuideServicesService))
+    private readonly guideServicesService: GuideServicesService,
   ) {}
 
   // método para obtener el listado entero de las disponibilidades de los guías
@@ -39,15 +51,50 @@ export class GuideAvailabilityService {
   async create(
     createGuideAvailabilityDto: CreateGuideAvailabilityDto,
   ): Promise<GuideAvailability> {
+    // verificamos que el guía tiene servicios asignados para conocer su zona horaria
+    // un guía debe tener al menos un servicio antes de poder crear disponibilidad
+    const guideServices = await this.guideServicesService.findByUser(
+      createGuideAvailabilityDto.user_id,
+    );
+
+    if (guideServices.length === 0 || guideServices[0].services.length === 0) {
+      throw new ConflictException(
+        'El guía no tiene servicios asignados. Asigna al menos un servicio antes de crear disponibilidad',
+      );
+    }
+
+    // todos los servicios del guía comparten la misma zona horaria
+    // por lo que tomamos la zona horaria del primer servicio asignado
+    const guideTimezone = guideServices[0].services[0].timezone;
+
+    // convertimos las horas de la zona horaria del guía a UTC antes de guardar
+    const toUtcTime = (date: string, time: string): string => {
+      const dateTimeStr = `${date} ${time}`;
+      const dt = DateTime.fromFormat(dateTimeStr, 'yyyy-MM-dd HH:mm', {
+        zone: guideTimezone,
+      });
+      return dt.toUTC().toFormat('HH:mm');
+    };
+
+    const startTimeUtc = toUtcTime(
+      createGuideAvailabilityDto.start_date,
+      createGuideAvailabilityDto.start_time,
+    );
+    const endTimeUtc = toUtcTime(
+      createGuideAvailabilityDto.end_date,
+      createGuideAvailabilityDto.end_time,
+    );
+
     // verificamos que no haya solapamiento con franjas existentes
     const overlap = await this.hasOverlap(
       createGuideAvailabilityDto.user_id,
       createGuideAvailabilityDto.start_date,
       createGuideAvailabilityDto.end_date,
-      createGuideAvailabilityDto.start_time,
-      createGuideAvailabilityDto.end_time,
+      startTimeUtc,
+      endTimeUtc,
     );
 
+    // mensaje de error si hay solapamiento
     if (overlap) {
       throw new ConflictException(
         'La franja horaria seleccionada se solapa con una disponibilidad ya existente',
@@ -55,12 +102,12 @@ export class GuideAvailabilityService {
     }
 
     return await this.guideAvailabilityRepository.save({
-      // guardamos la relación usando referencias parciales a User
       user: { id: createGuideAvailabilityDto.user_id },
       start_date: createGuideAvailabilityDto.start_date,
       end_date: createGuideAvailabilityDto.end_date,
-      start_time: createGuideAvailabilityDto.start_time,
-      end_time: createGuideAvailabilityDto.end_time,
+      // guardamos las horas en UTC
+      start_time: startTimeUtc,
+      end_time: endTimeUtc,
     });
   }
 
@@ -69,31 +116,32 @@ export class GuideAvailabilityService {
     await this.guideAvailabilityRepository.delete(id);
   }
 
-  // método para encontrar guías disponibles en un rango de fecha y hora concreto
+  // método para encontrar guías disponibles en un rango de tiempo concreto (Unix timestamps)
   async findAvailableGuides(
-    startDatetime: Date,
-    endDatetime: Date,
+    startTimestamp: number,
+    endTimestamp: number,
   ): Promise<GuideAvailabilityByUserResponseDto[]> {
-    // usamos QueryBuilder para construir una consulta más compleja
     const results = await this.guideAvailabilityRepository
       .createQueryBuilder('ga')
       // cargamos los datos del usuario relacionado
       .leftJoinAndSelect('ga.user', 'user')
-      // el guía debe estar disponible desde antes del inicio del evento
-      .where('ga.start_date <= :startDate', {
-        startDate: startDatetime.toISOString().split('T')[0],
+      // convertimos las fechas y horas de disponibilidad a Unix timestamp con UNIX_TIMESTAMP()
+      // y comparamos directamente con los timestamps del evento
+      // la fecha de inicio de disponibilidad es anterior o igual a la fecha del evento
+      .where('ga.start_date <= DATE(FROM_UNIXTIME(:startTimestamp))', {
+        startTimestamp,
       })
-      // y seguir disponible hasta después del fin del evento
-      .andWhere('ga.end_date >= :endDate', {
-        endDate: endDatetime.toISOString().split('T')[0],
+      // la fecha de fin de disponibilidad es posterior o igual a la fecha del evento
+      .andWhere('ga.end_date >= DATE(FROM_UNIXTIME(:endTimestamp))', {
+        endTimestamp,
       })
-      // el guía debe empezar a trabajar antes de que empiece el evento
-      .andWhere('ga.start_time <= :startTime', {
-        startTime: startDatetime.toISOString().split('T')[1].slice(0, 5),
+      // la hora de inicio del guía es anterior a la hora de inicio del evento
+      .andWhere('ga.start_time < TIME(FROM_UNIXTIME(:startTimestamp))', {
+        startTimestamp,
       })
-      // y seguir trabajando después de que termine el evento
-      .andWhere('ga.end_time >= :endTime', {
-        endTime: endDatetime.toISOString().split('T')[1].slice(0, 5),
+      // la hora de fin del guía es posterior o igual a la hora de fin del evento
+      .andWhere('ga.end_time >= TIME(FROM_UNIXTIME(:endTimestamp))', {
+        endTimestamp,
       })
       .getMany();
 

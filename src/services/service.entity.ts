@@ -15,4 +15,6 @@ export class Service {
   name!: string;
   @Column({ default: 0 })
   duration!: number;
+  @Column({ length: 50, default: 'UTC' })
+  timezone!: string;
 }

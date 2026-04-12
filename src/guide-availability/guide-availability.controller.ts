@@ -30,14 +30,14 @@ export class GuideAvailabilityController {
   @Get()
   findAll(
     @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
-    @Query('startDatetime') startDatetime?: string,
-    @Query('endDatetime') endDatetime?: string,
+    @Query('startTimestamp') startTimestamp?: string,
+    @Query('endTimestamp') endTimestamp?: string,
   ) {
     if (userId) return this.guideAvailabilityService.findByUser(userId);
-    if (startDatetime && endDatetime) {
+    if (startTimestamp && endTimestamp) {
       return this.guideAvailabilityService.findAvailableGuides(
-        new Date(startDatetime),
-        new Date(endDatetime),
+        parseInt(startTimestamp),
+        parseInt(endTimestamp),
       );
     }
     return this.guideAvailabilityService.findAll();
