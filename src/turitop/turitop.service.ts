@@ -16,6 +16,10 @@ import {
   TuriTopEvent,
   TuriTopEventsResponse,
 } from './interfaces/turitop-event.interface';
+import {
+  TuriTopBooking,
+  TuriTopBookingsResponse,
+} from './interfaces/turitop-booking.interface';
 
 @Injectable()
 export class TuritopService {
@@ -78,6 +82,31 @@ export class TuritopService {
     );
 
     return response.data.data.events;
+  }
+
+  // método para sincronizar las reservas con la BBDD local
+  async getBookings(
+    startDate: number,
+    endDate: number,
+  ): Promise<TuriTopBooking[]> {
+    const response = await firstValueFrom(
+      this.httpService.post<TuriTopBookingsResponse>(
+        `${this.apiUrl}/booking/getbookings`,
+        {
+          data: {
+            filter: {
+              event_date_from: startDate,
+              event_date_to: endDate,
+              show_deleted: 0,
+            },
+            language_code: this.language,
+          },
+        },
+        this.headers,
+      ),
+    );
+
+    return response.data.data.bookings;
   }
 
   // método auxiliar para el header de autenticación para todas las llamadas a TuriTop

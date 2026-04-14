@@ -5,13 +5,15 @@ import { ServicesController } from './services.controller';
 // y la entidad Service que representa la tabla services
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Service } from './service.entity';
+// importamos el módulo de TuriTopModule para sincronizar los servicios
+import { TuritopModule } from '../turitop/turitop.module';
 
 @Module({
   // Indicamos qué entidad vamos a usar en este módulo
-  imports: [TypeOrmModule.forFeature([Service])],
+  imports: [TypeOrmModule.forFeature([Service]), TuritopModule],
   providers: [ServicesService],
   controllers: [ServicesController],
-  // exportamos UsersService para que otros módulos puedan usarlo
+  // exportamos ServicesService para que otros módulos puedan usarlo
   exports: [ServicesService],
 })
 export class ServicesModule {}

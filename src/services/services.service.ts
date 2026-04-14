@@ -5,8 +5,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 // importamos la entidad Service
 import { Service } from './service.entity';
-// el DTO para crear o actualizar servicios
-import { CreateUpdateServiceDto } from './dto/create-update-service.dto';
+// importamos DTO para dar formato de productos(TuriTop) a Services(BBDD)
+import { SyncServiceDto } from './dto/sync-service.dto';
+// importamos el servicio TuriTop para la sincronización de servicios
+import { TuritopService } from '../turitop/turitop.service';
 
 @Injectable()
 export class ServicesService {
@@ -14,6 +16,8 @@ export class ServicesService {
     // inyectamos el repositorio de la entidad "Service"
     @InjectRepository(Service)
     private readonly servicesRepository: Repository<Service>,
+    // inyectamos TuritopService para las llamadas a la API de TuriTop
+    private readonly turitopService: TuritopService,
   ) {}
 
   // método para obtener el listado entero de los servicios
@@ -26,13 +30,19 @@ export class ServicesService {
     return await this.servicesRepository.findOne({ where: { id } });
   }
 
-  // método para crear o actualizar servicios
-  async syncServices(services: CreateUpdateServiceDto[]): Promise<void> {
+  // método para sincronizar los servicios desde TuriTop en la BBDD local
+  async syncServices(): Promise<void> {
+    // obtenemos los productos de TuriTop (ya filtrados: solo tours propios)
+    const products = await this.turitopService.getProducts();
+
+    // transformamos los productos de TuriTop al formato del DTO
+    const servicesToSync = products.map((p) => SyncServiceDto.fromTuriTop(p));
+
     // obtenemos todos los servicios que hay actualmente en la BBDD
     const existingServices = await this.servicesRepository.find();
 
     // IDs de TuriTop que vienen en la respuesta
-    const incomingIds = services.map((s) => s.turitop_product_id);
+    const incomingIds = servicesToSync.map((s) => s.turitop_product_id);
 
     // borramos los servicios que ya no existen en TuriTop
     for (const existing of existingServices) {
@@ -42,7 +52,7 @@ export class ServicesService {
     }
 
     // creamos o actualizamos los que vienen en la respuesta
-    for (const serviceData of services) {
+    for (const serviceData of servicesToSync) {
       const existing = await this.servicesRepository.findOne({
         where: { turitop_product_id: serviceData.turitop_product_id },
       });

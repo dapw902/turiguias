@@ -6,14 +6,11 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Body,
   UseGuards,
   Delete,
 } from '@nestjs/common';
 // importamos el servicio
 import { ServicesService } from './services.service';
-// el DTO para crear y actualizar servicios
-import { CreateUpdateServiceDto } from './dto/create-update-service.dto';
 // JwtAuthGuard: nuestro guard que verifica el token JWT
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -34,10 +31,10 @@ export class ServicesController {
     return this.servicesService.findOne(id);
   }
 
-  // endpoint para recuperar crear o actualizar los servicios
-  @Post('importFromTuritop')
-  importFromTuritop(@Body() services: CreateUpdateServiceDto[]) {
-    return this.servicesService.syncServices(services);
+  // endpoint para sincronizar los servicios desde TuriTop
+  @Post('sync')
+  sync() {
+    return this.servicesService.syncServices();
   }
 
   // endpoint para borrar un servicio
