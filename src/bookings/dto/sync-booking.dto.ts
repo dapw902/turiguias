@@ -10,13 +10,11 @@ export class SyncBookingDto {
   client_data!: Record<string, string>;
   ticket_type_count!: object;
   status!: string;
-  deleted!: boolean;
 
   static fromTuriTop(booking: TuriTopBooking): SyncBookingDto {
     const dto = new SyncBookingDto();
     dto.turitop_booking_id = booking.short_id;
     dto.status = booking.status;
-    dto.deleted = booking.deleted;
     dto.ticket_type_count = booking.ticket_type_count;
 
     // calculamos el total de pax sumando count * seats donde seats > 0

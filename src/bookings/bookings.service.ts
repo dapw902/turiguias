@@ -32,19 +32,18 @@ export class BookingsService {
 
     // obtenemos las reservas de TuriTop para ese rango
     const bookings = await this.turitopService.getBookings(now, endDate);
+    /* log temporal para ver errores
+    console.log('Total bookings recibidos:', bookings.length);
+    console.log(
+      'Deleted:',
+      bookings.filter((b) => b.deleted).map((b) => b.short_id),
+    );
+    */
 
     for (const booking of bookings) {
       // transformamos la reserva al formato de nuestra BBDD
       // decodificando entidades HTML y calculando el PAX
       const dto = SyncBookingDto.fromTuriTop(booking);
-
-      // si la reserva fue borrada en TuriTop, la borramos de nuestra BBDD
-      if (dto.deleted) {
-        await this.bookingRepository.delete({
-          turitop_booking_id: dto.turitop_booking_id,
-        });
-        continue;
-      }
 
       // buscamos el evento correspondiente en nuestra BBDD
       const event = await this.eventsService.findByServiceAndTime(
@@ -78,6 +77,28 @@ export class BookingsService {
           ticket_type_count: dto.ticket_type_count,
           status: dto.status,
         });
+      }
+    }
+
+    // si la reserva que ya estaba registrada fue borrada en TuriTop, cambiamos su estado a 'deleted'.
+    // obtenemos los IDs de las reservas que vinieron en la respuesta
+    const incomingIds = bookings.map((b) => b.short_id);
+
+    // buscamos las reservas activas en nuestra BBDD para ese rango
+    const existingBookings = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoin('booking.event', 'event')
+      .where('event.event_time BETWEEN :start AND :end', {
+        start: now,
+        end: endDate,
+      })
+      .andWhere('booking.status != :deleted', { deleted: 'deleted' })
+      .getMany();
+
+    // las que no vinieron en la respuesta, las marcamos como deleted
+    for (const existing of existingBookings) {
+      if (!incomingIds.includes(existing.turitop_booking_id)) {
+        await this.bookingRepository.update(existing.id, { status: 'deleted' });
       }
     }
   }

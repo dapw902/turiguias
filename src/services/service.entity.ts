@@ -20,4 +20,7 @@ export class Service {
 
   @Column({ length: 50, default: 'UTC' })
   timezone!: string;
+
+  @Column({ default: true })
+  active!: boolean;
 }

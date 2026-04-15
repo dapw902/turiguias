@@ -44,10 +44,10 @@ export class ServicesService {
     // IDs de TuriTop que vienen en la respuesta
     const incomingIds = servicesToSync.map((s) => s.turitop_product_id);
 
-    // borramos los servicios que ya no existen en TuriTop
+    // si un existe deja de existir en TuriTop, lo marcamos como inactivo
     for (const existing of existingServices) {
       if (!incomingIds.includes(existing.turitop_product_id)) {
-        await this.servicesRepository.delete(existing.id);
+        await this.servicesRepository.update(existing.id, { active: false });
       }
     }
 
