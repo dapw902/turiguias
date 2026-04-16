@@ -11,6 +11,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 // importamos todo el módulo de bcrypt para la encriptación de contraseñas
 import * as bcrypt from 'bcrypt';
+// importamos el dto que da formato a las respuestas
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -23,13 +25,16 @@ export class UsersService {
   ) {}
 
   // método para obtener el listado entero de usuarios
-  async findAll(): Promise<User[]> {
-    return await this.usersRepository.find();
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersRepository.find();
+    return users.map((u) => UserResponseDto.fromEntity(u));
   }
 
   // método para recuperar un usuario específico
-  async findOne(id: number): Promise<User | null> {
-    return await this.usersRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<UserResponseDto | null> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) return null;
+    return UserResponseDto.fromEntity(user);
   }
 
   // método para borrar a un usuario
@@ -38,7 +43,7 @@ export class UsersService {
   }
 
   // método para crear nuevos usuarios
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // encriptación de la contraseña
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     // creamos un usuario validando los datos con el DTO
@@ -50,17 +55,14 @@ export class UsersService {
     });
     // hacermos un INSERT en la BBDD para registrar al usuario
     const savedUser = await this.usersRepository.save(user);
-    // desestructuramos el objeto savedUser para excluir la contraseña de la respuesta
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = savedUser;
-    return result;
+    return UserResponseDto.fromEntity(savedUser);
   }
 
   // método para actualizar usuarios existentes
   async update(
     id: number,
     updateUserDto: UpdateUserDto,
-  ): Promise<Omit<User, 'password'>> {
+  ): Promise<UserResponseDto> {
     // si se manda nueva contraseña, se hashea antes de guardala
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
@@ -69,10 +71,7 @@ export class UsersService {
     await this.usersRepository.update(id, updateUserDto);
     // recuperamos los datos del usuario que se ha cambiado
     const updatedUser = await this.usersRepository.findOne({ where: { id } });
-    // desestructuramos el objeto updatedUser para excluir la contraseña de la respuesta
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = updatedUser!;
-    return result;
+    return UserResponseDto.fromEntity(updatedUser!);
   }
 
   // método para buscar a un usuario por su email y verificar su contraseña

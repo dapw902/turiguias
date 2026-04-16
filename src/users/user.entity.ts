@@ -38,6 +38,6 @@ export class User {
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 
-  @Column({ default: true })
+  @Column({ default: false, select: false })
   must_change_password!: boolean;
 }

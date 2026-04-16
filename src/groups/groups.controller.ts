@@ -32,4 +32,28 @@ export class GroupsController {
   confirmGroups(@Body() dto: ConfirmGroupsDto) {
     return this.groupsService.confirmGroups(dto);
   }
+
+  // endpoint para asignar o cambiar el guía de un grupo
+  @Patch('assign-guide/:id')
+  assignGuide(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('user_id') userId: number | null,
+  ) {
+    return this.groupsService.assignGuide(id, userId);
+  }
+
+  // endpoint para obtener los grupos de un evento
+  @Get('event/:eventId')
+  findByEvent(@Param('eventId', ParseIntPipe) eventId: number) {
+    return this.groupsService.findByEvent(eventId);
+  }
+
+  // endpoint para mover una reserva de un grupo a otro
+  @Patch('move-booking/:bookingId/to/:targetGroupId')
+  moveBooking(
+    @Param('bookingId', ParseIntPipe) bookingId: number,
+    @Param('targetGroupId', ParseIntPipe) targetGroupId: number,
+  ) {
+    return this.groupsService.moveBooking(bookingId, targetGroupId);
+  }
 }

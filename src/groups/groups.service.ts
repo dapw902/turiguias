@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
@@ -164,5 +168,81 @@ export class GroupsService {
     }
 
     return savedGroups;
+  }
+
+  // método para asignar o cambiar el guía de un grupo
+  async assignGuide(groupId: number, userId: number | null): Promise<Group> {
+    // buscamos el grupo con su evento
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['event', 'event.service'],
+    });
+    if (!group) throw new NotFoundException('Grupo no encontrado');
+
+    // si se asigna un guía, verificamos su disponibilidad
+    if (userId) {
+      const eventTime = Number(group.event.event_time);
+      const eventEndTime = eventTime + Number(group.event.duration) * 60;
+      const availableGuides =
+        await this.guideAvailabilityService.findAvailableGuidesForEvent(
+          group.event.service.id,
+          eventTime,
+          eventEndTime,
+        );
+
+      const isAvailable = availableGuides.some((g) => g.guide_id === userId);
+      if (!isAvailable) {
+        throw new BadRequestException(
+          'El guía no está disponible para este evento',
+        );
+      }
+    }
+
+    await this.groupRepository.update(groupId, {
+      user: userId ? { id: userId } : null,
+    });
+
+    return (await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['user', 'event'],
+    })) as Group;
+  }
+
+  // método para mover una reserva de un grupo a otro
+  async moveBooking(bookingId: number, targetGroupId: number): Promise<void> {
+    // buscamos la reserva
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+      relations: ['event', 'group'],
+    });
+    if (!booking) throw new NotFoundException('Reserva no encontrada');
+
+    // buscamos el grupo destino
+    const targetGroup = await this.groupRepository.findOne({
+      where: { id: targetGroupId },
+      relations: ['event'],
+    });
+    if (!targetGroup)
+      throw new NotFoundException('Grupo destino no encontrado');
+
+    // verificamos que el grupo destino es del mismo evento
+    if (booking.event.id !== targetGroup.event.id) {
+      throw new BadRequestException(
+        'Este grupo es para un evento distinto al de esta reserva',
+      );
+    }
+
+    // movemos la reserva al grupo destino
+    await this.bookingRepository.update(bookingId, {
+      group: { id: targetGroupId },
+    });
+  }
+
+  // método para recuperar los grupos de un evento específico
+  async findByEvent(eventId: number): Promise<Group[]> {
+    return await this.groupRepository.find({
+      where: { event: { id: eventId } },
+      relations: ['user', 'event'],
+    });
   }
 }
