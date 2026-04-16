@@ -12,8 +12,9 @@ import { Repository } from 'typeorm';
 import { GuideAvailability } from './guide-availability.entity';
 // el DTO para crear las disponibilidades de los guias
 import { CreateGuideAvailabilityDto } from './dto/create-guide-availability.dto';
-// DTO para dar forma a la respuesta de los endpoints
+// DTOs para dar forma a las respuestas de los endpoints
 import { GuideAvailabilityByUserResponseDto } from './dto/guide-availability-response.dto';
+import { AvailableGuideForEventDto } from './dto/available-guide-for-event.dto';
 // importamos método para la conversión de local a UTC
 import { DateTime } from 'luxon';
 // importamos el servicio Guide Services para obtener la zona horaria del guía
@@ -146,6 +147,53 @@ export class GuideAvailabilityService {
       .getMany();
 
     return this.groupByGuide(results);
+  }
+
+  // método para encontrar guías disponibles para un evento concreto
+  // devuelve guía + capacidad para ese servicio
+  async findAvailableGuidesForEvent(
+    serviceId: number,
+    eventTime: number,
+    eventEndTime: number,
+  ): Promise<AvailableGuideForEventDto[]> {
+    const results = await this.guideAvailabilityRepository
+      .createQueryBuilder('ga')
+      .leftJoinAndSelect('ga.user', 'user')
+      // filtramos por disponibilidad horaria
+      .where('ga.start_date <= DATE(FROM_UNIXTIME(:eventTime))', {
+        eventTime,
+      })
+      .andWhere('ga.end_date >= DATE(FROM_UNIXTIME(:eventEndTime))', {
+        eventEndTime,
+      })
+      .andWhere('ga.start_time < TIME(FROM_UNIXTIME(:eventTime))', {
+        eventTime,
+      })
+      .andWhere('ga.end_time >= TIME(FROM_UNIXTIME(:eventEndTime))', {
+        eventEndTime,
+      })
+      // filtramos por servicio asignado
+      .innerJoin(
+        'guide_services',
+        'gs',
+        'gs.user_id = ga.user_id AND gs.service_id = :serviceId',
+        { serviceId },
+      )
+      .addSelect('gs.capacity', 'capacity')
+      .getRawAndEntities();
+
+    // interfaz para tipar los resultados raw de la query
+    interface RawGuideResult {
+      user_id: number;
+      user_name: string;
+      capacity: number;
+    }
+
+    return results.raw.map((r: RawGuideResult) => ({
+      guide_id: r.user_id,
+      guide_name: r.user_name,
+      capacity: r.capacity,
+    }));
   }
 
   // métodos auxiliares

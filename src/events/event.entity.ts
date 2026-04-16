@@ -8,6 +8,8 @@ import {
 } from 'typeorm';
 // importamos los módulos de Services
 import { Service } from '../services/service.entity';
+// transformer para asegurar que el valor venga como number en vez de string
+import { BigIntTransformer } from '../common/transformers/bigint.transformer';
 
 // vinculamos a la tabla "events" de la BBDD
 @Entity('events')
@@ -21,7 +23,7 @@ export class Event {
   @JoinColumn({ name: 'service_id' })
   service!: Service;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', transformer: BigIntTransformer })
   event_time!: number;
 
   @Column({ default: 0 })

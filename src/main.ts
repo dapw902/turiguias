@@ -7,7 +7,13 @@ async function bootstrap() {
   // activamos la validación globalmente en la app
   // whitelist: true - cualquier campo que llegue
   // en la petición que no esté definido en el DTO se elimina automáticamente
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

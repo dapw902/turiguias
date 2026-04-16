@@ -23,4 +23,7 @@ export class Group {
 
   @Column({ default: false })
   confirmed!: boolean;
+
+  @Column({ default: false })
+  needs_attention!: boolean;
 }
