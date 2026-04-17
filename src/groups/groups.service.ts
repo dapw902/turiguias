@@ -209,7 +209,10 @@ export class GroupsService {
   }
 
   // método para mover una reserva de un grupo a otro
-  async moveBooking(bookingId: number, targetGroupId: number): Promise<void> {
+  async assignBookingToGroup(
+    bookingId: number,
+    targetGroupId: number,
+  ): Promise<void> {
     // buscamos la reserva
     const booking = await this.bookingRepository.findOne({
       where: { id: bookingId },

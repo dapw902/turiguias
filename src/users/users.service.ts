@@ -74,7 +74,7 @@ export class UsersService {
     return UserResponseDto.fromEntity(updatedUser!);
   }
 
-  // método para buscar a un usuario por su email y verificar su contraseña
+  // método interno para buscar a un usuario por su email y verificar su contraseña
   async findByEmail(email: string): Promise<User | null> {
     return await this.usersRepository.findOne({
       where: { email },
@@ -87,6 +87,22 @@ export class UsersService {
         'role',
         'must_change_password',
       ],
+    });
+  }
+
+  // método interno para actualizar la contraseña de un usuario
+  async updatePassword(id: number, hashedPassword: string): Promise<void> {
+    await this.usersRepository.update(id, {
+      password: hashedPassword,
+      must_change_password: false,
+    });
+  }
+
+  // método interno para buscar las credenciales de un usuario por id
+  async findCredentialsById(id: number): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'email', 'password', 'role', 'must_change_password'],
     });
   }
 }

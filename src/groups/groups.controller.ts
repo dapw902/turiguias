@@ -49,11 +49,11 @@ export class GroupsController {
   }
 
   // endpoint para mover una reserva de un grupo a otro
-  @Patch('move-booking/:bookingId/to/:targetGroupId')
-  moveBooking(
+  @Patch('assign-booking/:bookingId/to/:targetGroupId')
+  assignBookingToGroup(
     @Param('bookingId', ParseIntPipe) bookingId: number,
     @Param('targetGroupId', ParseIntPipe) targetGroupId: number,
   ) {
-    return this.groupsService.moveBooking(bookingId, targetGroupId);
+    return this.groupsService.assignBookingToGroup(bookingId, targetGroupId);
   }
 }
