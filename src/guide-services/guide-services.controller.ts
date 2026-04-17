@@ -8,7 +8,6 @@ import {
   Post,
   Patch,
   Body,
-  UseGuards,
   Delete,
   Query,
 } from '@nestjs/common';
@@ -16,10 +15,10 @@ import {
 import { GuideServicesService } from './guide-services.service';
 // el DTO para crear y actualizar servicios
 import { CreateUpdateGuideServiceDto } from './dto/create-update-guide-service.dto';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
-@UseGuards(JwtAuthGuard)
 @Controller('guide-services')
 export class GuideServicesController {
   constructor(private readonly guideServicesService: GuideServicesService) {}
@@ -39,12 +38,14 @@ export class GuideServicesController {
   }
 
   // endpoint para crear nuevas relaciones guía-servicio
+  @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() guideService: CreateUpdateGuideServiceDto) {
     return this.guideServicesService.create(guideService);
   }
 
   // método para actualizar una relación guía-servicio
+  @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -54,6 +55,7 @@ export class GuideServicesController {
   }
 
   // endpoint para borrar una relación guía-servicio
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.guideServicesService.remove(id);

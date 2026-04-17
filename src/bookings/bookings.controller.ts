@@ -5,21 +5,21 @@ import {
   Post,
   Get,
   Param,
-  UseGuards,
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
 // importamos el servicio
 import { BookingsService } from './bookings.service';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
-@UseGuards(JwtAuthGuard)
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   // endpoint para sincronizar las reservas de un periodo de tiempo que se le indique
+  @Roles(UserRole.ADMIN)
   @Post('sync')
   sync(@Query('days') days?: string) {
     const parsedDays = days === '7' ? 7 : 30;
@@ -27,6 +27,7 @@ export class BookingsController {
   }
 
   // endpoint para recuperar todas las reservas
+  @Roles(UserRole.ADMIN)
   @Get()
   findAll() {
     return this.bookingsService.findAll();

@@ -1,12 +1,13 @@
 // importamos los decoradores necesarios
 // UseGuards: decorador para proteger endpoints con un guard
-import { Controller, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Query } from '@nestjs/common';
 // importamos el servicio
 import { EventsService } from './events.service';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
-@UseGuards(JwtAuthGuard)
+@Roles(UserRole.ADMIN)
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}

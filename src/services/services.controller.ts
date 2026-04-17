@@ -6,15 +6,14 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  UseGuards,
   Delete,
 } from '@nestjs/common';
 // importamos el servicio
 import { ServicesService } from './services.service';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
-@UseGuards(JwtAuthGuard)
 @Controller('services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
@@ -32,12 +31,14 @@ export class ServicesController {
   }
 
   // endpoint para sincronizar los servicios desde TuriTop
+  @Roles(UserRole.ADMIN)
   @Post('sync')
   sync() {
     return this.servicesService.syncServices();
   }
 
   // endpoint para borrar un servicio
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.servicesService.remove(id);

@@ -7,7 +7,6 @@ import {
   ParseIntPipe,
   Post,
   Body,
-  UseGuards,
   Delete,
   Query,
 } from '@nestjs/common';
@@ -15,10 +14,10 @@ import {
 import { GuideAvailabilityService } from './guide-availability.service';
 // el DTO para crear disponibilidades
 import { CreateGuideAvailabilityDto } from './dto/create-guide-availability.dto';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
-@UseGuards(JwtAuthGuard)
 @Controller('guide-availability')
 export class GuideAvailabilityController {
   constructor(
@@ -44,12 +43,14 @@ export class GuideAvailabilityController {
   }
 
   // endpoint para crear nuevas disponibilidades
+  @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() guideAvailability: CreateGuideAvailabilityDto) {
     return this.guideAvailabilityService.create(guideAvailability);
   }
 
   // endpoint para borrar una disponibilidad
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.guideAvailabilityService.remove(id);

@@ -9,7 +9,6 @@ import {
   Post,
   Body,
   Patch,
-  UseGuards,
 } from '@nestjs/common';
 // Importamos el servicio
 import { UsersService } from './users.service';
@@ -17,15 +16,16 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 // y el DTO para actualizar usuarios existentes
 import { UpdateUserDto } from './dto/update-user.dto';
-// JwtAuthGuard: nuestro guard que verifica el token JWT
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// importamos la entidad UserRole y el decorador para la verificación de roles
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from './user.entity';
 
-@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // endpoint para obtener el listado entero de usuarios
+  @Roles(UserRole.ADMIN)
   @Get()
   findAll() {
     return this.usersService.findAll();
@@ -38,18 +38,21 @@ export class UsersController {
   }
 
   // endpoint para borrar a un usuario
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
 
   // endpoint para crear a un usuario
+  @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   // endpoint para actualizar a un usuario
+  @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
