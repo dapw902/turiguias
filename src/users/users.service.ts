@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
 // Repository - clase de TypeORM para tener acceso a los métodos de consulta
 import { Repository } from 'typeorm';
-// importamos la entidad User
-import { User } from './user.entity';
+// importamos las entidades User y UserRole
+import { User, UserRole } from './user.entity';
 // el DTO para crear nuevos usuarios
 import { CreateUserDto } from './dto/create-user.dto';
 // el DTO para actualizar usuarios existentes
@@ -39,6 +39,18 @@ export class UsersService {
 
   // método para borrar a un usuario
   async remove(id: number): Promise<void> {
+    // verificamos que no sea el último admin
+    const admins = await this.usersRepository.count({
+      where: { role: UserRole.ADMIN },
+    });
+    const userToDelete = await this.usersRepository.findOne({ where: { id } });
+
+    if (userToDelete?.role === UserRole.ADMIN && admins === 1) {
+      throw new BadRequestException(
+        'No se puede eliminar el último administrador',
+      );
+    }
+
     await this.usersRepository.delete(id);
   }
 
