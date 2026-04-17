@@ -23,6 +23,9 @@ import { EventsModule } from './events/events.module';
 import { TuritopModule } from './turitop/turitop.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { GroupsModule } from './groups/groups.module';
+// para el Cron de sincronización automática
+import { ScheduleModule } from '@nestjs/schedule';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -62,6 +65,10 @@ import { GroupsModule } from './groups/groups.module';
     BookingsModule,
 
     GroupsModule,
+
+    ScheduleModule.forRoot(),
+
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [
