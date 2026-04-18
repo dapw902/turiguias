@@ -69,6 +69,7 @@ export class BookingsService {
           client_data: dto.client_data,
           ticket_type_count: dto.ticket_type_count,
           status: dto.status,
+          notes: dto.notes,
         });
       } else {
         // si no existe, creamos una nueva reserva
@@ -79,6 +80,7 @@ export class BookingsService {
           client_data: dto.client_data,
           ticket_type_count: dto.ticket_type_count,
           status: dto.status,
+          notes: dto.notes,
         });
       }
     }

@@ -16,6 +16,7 @@ export interface TuriTopBooking {
   client_data: Record<string, string>;
   ticket_type_count: TuriTopTicketType[];
   deleted: boolean;
+  notes: string;
 }
 
 // define la forma de la respuesta completa de getbookings

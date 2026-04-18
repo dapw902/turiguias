@@ -10,12 +10,14 @@ export class SyncBookingDto {
   client_data!: Record<string, string>;
   ticket_type_count!: object;
   status!: string;
+  notes!: string | null;
 
   static fromTuriTop(booking: TuriTopBooking): SyncBookingDto {
     const dto = new SyncBookingDto();
     dto.turitop_booking_id = booking.short_id;
     dto.status = booking.status;
-    // decodificamos las entidades HTML del ticket_type_count
+    // decodificamos las entidades HTML de notes y de ticket_type_count
+    dto.notes = booking.notes ? he.decode(booking.notes) : null;
     dto.ticket_type_count = booking.ticket_type_count.map((t) => ({
       ...t,
       name: he.decode(t.name),

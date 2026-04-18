@@ -33,6 +33,9 @@ export class Booking {
   @Column({ default: 'confirmed' })
   status!: string;
 
+  @Column({ type: 'text', nullable: true })
+  notes!: string | null;
+
   @ManyToOne(() => Group, { nullable: true })
   @JoinColumn({ name: 'group_id' })
   group!: Group | null;
