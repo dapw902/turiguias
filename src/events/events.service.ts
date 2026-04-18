@@ -14,6 +14,11 @@ import { SyncEventDto } from './dto/sync-event.dto';
 // dto para la paginación de resultados
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
+// interfaz para tipar los resultados raw de la query de eventos
+interface RawEventResult {
+  totalPax: string;
+}
+
 @Injectable()
 export class EventsService {
   constructor(
@@ -93,10 +98,17 @@ export class EventsService {
     endTimestamp?: number,
     page: number = 1,
     limit: number = 20,
-  ): Promise<PaginatedResponseDto<Event>> {
+  ): Promise<PaginatedResponseDto<object>> {
     const query = this.eventRepository
       .createQueryBuilder('event')
-      .leftJoinAndSelect('event.service', 'service');
+      .leftJoinAndSelect('event.service', 'service')
+      // calculamos el total de pax de reservas activas por evento
+      .addSelect(
+        `(SELECT COALESCE(SUM(b.pax), 0) FROM bookings b 
+          WHERE b.event_id = event.id 
+          AND b.status != 'deleted')`,
+        'totalPax',
+      );
 
     if (serviceId) {
       query.andWhere('event.service_id = :serviceId', { serviceId });
@@ -113,10 +125,16 @@ export class EventsService {
 
     // aplicamos la paginación
     const total = await query.getCount();
-    const data = await query
+    const { entities, raw } = await query
       .skip((page - 1) * limit)
       .take(limit)
-      .getMany();
+      .getRawAndEntities();
+
+    // combinamos los datos del evento con el totalPax calculado
+    const data = entities.map((event, index) => ({
+      ...event,
+      totalPax: parseInt((raw as RawEventResult[])[index]?.totalPax ?? '0'),
+    }));
 
     return {
       data,
