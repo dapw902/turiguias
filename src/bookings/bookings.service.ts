@@ -27,7 +27,8 @@ export class BookingsService {
   // método para sincronizar las reservas desde TuriTop
   async syncBookings(days: 7 | 30 = 30): Promise<void> {
     // calculamos el rango de fechas en Unix timestamps
-    const now = Math.floor(Date.now() / 1000);
+    // empezamos desde 3 días atrás para capturar cambios en reservas recientes
+    const now = Math.floor(Date.now() / 1000) - 3 * 24 * 60 * 60;
     const endDate = now + days * 24 * 60 * 60;
 
     // obtenemos las reservas de TuriTop para ese rango

@@ -57,9 +57,15 @@ export class ServicesService {
         where: { turitop_product_id: serviceData.turitop_product_id },
       });
       if (existing) {
-        await this.servicesRepository.update(existing.id, serviceData);
+        await this.servicesRepository.update(existing.id, {
+          ...serviceData,
+          active: true, // si viene de TuriTop, está activo
+        });
       } else {
-        await this.servicesRepository.save(serviceData);
+        await this.servicesRepository.save({
+          ...serviceData,
+          active: true,
+        });
       }
     }
   }

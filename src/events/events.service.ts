@@ -84,7 +84,30 @@ export class EventsService {
     });
   }
 
-  // método para recuperar un evento por servicio y timestamp
+  // método para obtener eventos con filtros opcionales
+  async findAll(
+    serviceId?: number,
+    startTimestamp?: number,
+    endTimestamp?: number,
+  ): Promise<Event[]> {
+    const query = this.eventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.service', 'service');
+
+    if (serviceId) {
+      query.andWhere('event.service_id = :serviceId', { serviceId });
+    }
+    if (startTimestamp) {
+      query.andWhere('event.event_time >= :startTimestamp', { startTimestamp });
+    }
+    if (endTimestamp) {
+      query.andWhere('event.event_time <= :endTimestamp', { endTimestamp });
+    }
+
+    return await query.getMany();
+  }
+
+  // método para recuperar un evento específico por servicio y timestamp
   async findByServiceAndTime(
     turitopProductId: string,
     eventTime: number,

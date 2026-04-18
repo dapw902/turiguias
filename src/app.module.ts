@@ -26,6 +26,7 @@ import { GroupsModule } from './groups/groups.module';
 // para el Cron de sincronización automática
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -69,6 +70,8 @@ import { TasksModule } from './tasks/tasks.module';
     ScheduleModule.forRoot(),
 
     TasksModule,
+
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [
