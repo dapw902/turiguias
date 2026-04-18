@@ -19,6 +19,8 @@ import { AvailableGuideForEventDto } from './dto/available-guide-for-event.dto';
 import { DateTime } from 'luxon';
 // importamos el servicio Guide Services para obtener la zona horaria del guía
 import { GuideServicesService } from '../guide-services/guide-services.service';
+// dto para paginación
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class GuideAvailabilityService {
@@ -31,12 +33,32 @@ export class GuideAvailabilityService {
     private readonly guideServicesService: GuideServicesService,
   ) {}
 
-  // método para obtener el listado entero de las disponibilidades de los guías
-  async findAll(): Promise<GuideAvailabilityByUserResponseDto[]> {
+  // método para obtener el listado entero de las disponibilidades de los guías con paginación
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<GuideAvailabilityByUserResponseDto>> {
+    // contamos el total de guías únicos con disponibilidad
+    const total = await this.guideAvailabilityRepository
+      .createQueryBuilder('ga')
+      .select('COUNT(DISTINCT ga.user_id)', 'count')
+      .getRawOne<{ count: string }>()
+      .then((r) => parseInt(r?.count ?? '0'));
+
+    // obtenemos las disponibilidades con paginación
     const results = await this.guideAvailabilityRepository.find({
       relations: ['user'],
+      skip: (page - 1) * limit,
+      take: limit,
     });
-    return this.groupByGuide(results);
+
+    return {
+      data: this.groupByGuide(results),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para recuperar todas las disponibilidades de un guía

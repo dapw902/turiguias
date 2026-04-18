@@ -46,9 +46,9 @@ export class GroupsService {
     });
     const activeBookings = bookings.filter((b) => b.status !== 'deleted');
 
-    // logs temporales
-    console.log('Bookings encontrados:', bookings.length);
-    console.log('Activas:', activeBookings.length);
+    /* logs temporales
+    // console.log('Bookings encontrados:', bookings.length);
+    // console.log('Activas:', activeBookings.length); */
 
     // si no hay reservas activas, no hay nada que agrupar
     if (activeBookings.length === 0)
@@ -118,10 +118,10 @@ export class GroupsService {
       proposedGroups.push(currentGroup);
     }
 
-    // logs temporales
+    /* logs temporales
     console.log('Guías disponibles:', availableGuides.length);
     console.log('Capacidad máxima:', maxCapacity);
-    console.log('Grupos propuestos:', proposedGroups.length);
+    console.log('Grupos propuestos:', proposedGroups.length); */
 
     return {
       groups: proposedGroups,

@@ -17,6 +17,8 @@ import { CreateGuideAvailabilityDto } from './dto/create-guide-availability.dto'
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// dto para paginación
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('guide-availability')
 export class GuideAvailabilityController {
@@ -25,12 +27,13 @@ export class GuideAvailabilityController {
   ) {}
 
   // endpoint para obtener las disponibilidades con filtros opcionales
-  // (todos, por guía o por rango de tiempo)
+  // endpoint para obtener las disponibilidades con filtros opcionales
   @Get()
   findAll(
     @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
     @Query('startTimestamp') startTimestamp?: string,
     @Query('endTimestamp') endTimestamp?: string,
+    @Query() pagination?: PaginationDto,
   ) {
     if (userId) return this.guideAvailabilityService.findByUser(userId);
     if (startTimestamp && endTimestamp) {
@@ -39,7 +42,10 @@ export class GuideAvailabilityController {
         parseInt(endTimestamp),
       );
     }
-    return this.guideAvailabilityService.findAll();
+    return this.guideAvailabilityService.findAll(
+      pagination?.page,
+      pagination?.limit,
+    );
   }
 
   // endpoint para crear nuevas disponibilidades

@@ -15,6 +15,8 @@ import { CreateUpdateGuideServiceDto } from './dto/create-update-guide-service.d
 import { GuideServiceByUserResponseDto } from './dto/guide-service-response.dto';
 // importamos el servicio de Servicios para recuperar la zona horaria
 import { ServicesService } from '../services/services.service';
+// dtop para paginación
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class GuideServicesService {
@@ -25,12 +27,32 @@ export class GuideServicesService {
     private readonly servicesService: ServicesService,
   ) {}
 
-  // método para obtener el listado entero de las relaciones guía-servicio
-  async findAll(): Promise<GuideServiceByUserResponseDto[]> {
+  // método para obtener el listado entero de las relaciones guía-servicio con paginación
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<GuideServiceByUserResponseDto>> {
+    // contamos el total de guías únicos
+    const total = await this.guideServiceRepository
+      .createQueryBuilder('gs')
+      .select('COUNT(DISTINCT gs.user_id)', 'count')
+      .getRawOne<{ count: string }>()
+      .then((r) => parseInt(r?.count ?? '0'));
+
+    // obtenemos las relaciones con paginación
     const results = await this.guideServiceRepository.find({
       relations: ['user', 'service'],
+      skip: (page - 1) * limit,
+      take: limit,
     });
-    return this.groupByGuide(results);
+
+    return {
+      data: this.groupByGuide(results),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para recuperar los guías que pueden trabajar un servicio

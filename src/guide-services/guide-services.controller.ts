@@ -18,6 +18,8 @@ import { CreateUpdateGuideServiceDto } from './dto/create-update-guide-service.d
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// drop para la paginación
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('guide-services')
 export class GuideServicesController {
@@ -27,14 +29,17 @@ export class GuideServicesController {
   // (todos, por guía o servicio)
   @Get()
   findAll(
-    @Query('userId', new ParseIntPipe({ optional: true }))
-    userId?: number,
+    @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
     @Query('serviceId', new ParseIntPipe({ optional: true }))
     serviceId?: number,
+    @Query() pagination?: PaginationDto,
   ) {
     if (userId) return this.guideServicesService.findByUser(userId);
     if (serviceId) return this.guideServicesService.findByService(serviceId);
-    return this.guideServicesService.findAll();
+    return this.guideServicesService.findAll(
+      pagination?.page,
+      pagination?.limit,
+    );
   }
 
   // endpoint para crear nuevas relaciones guía-servicio

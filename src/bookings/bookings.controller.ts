@@ -13,6 +13,8 @@ import { BookingsService } from './bookings.service';
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// dto para la paginación de resultados
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('bookings')
 export class BookingsController {
@@ -29,8 +31,8 @@ export class BookingsController {
   // endpoint para recuperar todas las reservas
   @Roles(UserRole.ADMIN)
   @Get()
-  findAll() {
-    return this.bookingsService.findAll();
+  findAll(@Query() pagination: PaginationDto) {
+    return this.bookingsService.findAll(pagination.page, pagination.limit);
   }
 
   // endpoint para recuperar todas las reservas según un id de evento específico

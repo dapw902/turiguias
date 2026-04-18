@@ -7,12 +7,15 @@ import {
   ParseIntPipe,
   Post,
   Delete,
+  Query,
 } from '@nestjs/common';
 // importamos el servicio
 import { ServicesService } from './services.service';
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// dto para la paginación de resultados
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('services')
 export class ServicesController {
@@ -20,8 +23,8 @@ export class ServicesController {
 
   // endpoint para obtener el listado entero de los servicios
   @Get()
-  findAll() {
-    return this.servicesService.findAll();
+  findAll(@Query() pagination: PaginationDto) {
+    return this.servicesService.findAll(pagination.page, pagination.limit);
   }
 
   // endpoint para recuperar un servicio específico

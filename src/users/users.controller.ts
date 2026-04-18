@@ -9,6 +9,7 @@ import {
   Post,
   Body,
   Patch,
+  Query,
 } from '@nestjs/common';
 // Importamos el servicio
 import { UsersService } from './users.service';
@@ -19,6 +20,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from './user.entity';
+// dto para la paginación de resultados
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -27,8 +30,8 @@ export class UsersController {
   // endpoint para obtener el listado entero de usuarios
   @Roles(UserRole.ADMIN)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() pagination: PaginationDto) {
+    return this.usersService.findAll(pagination.page, pagination.limit);
   }
 
   // endpoint para recuperar un usuario específico

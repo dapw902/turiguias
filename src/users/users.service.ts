@@ -13,6 +13,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 // importamos el dto que da formato a las respuestas
 import { UserResponseDto } from './dto/user-response.dto';
+// dto para la paginación de resultados
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -24,10 +26,28 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  // método para obtener el listado entero de usuarios
-  async findAll(): Promise<UserResponseDto[]> {
-    const users = await this.usersRepository.find();
-    return users.map((u) => UserResponseDto.fromEntity(u));
+  // método para obtener el listado entero de usuarios con paginación
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<UserResponseDto>> {
+    // contamos el total de usuarios
+    const total = await this.usersRepository.count();
+
+    // obtenemos los usuarios de la página solicitada
+    const users = await this.usersRepository.find({
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data: users.map((u) => UserResponseDto.fromEntity(u)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para recuperar un usuario específico

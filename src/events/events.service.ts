@@ -11,6 +11,8 @@ import { ServicesService } from '../services/services.service';
 import { TuritopService } from '../turitop/turitop.service';
 // importamos el DTO para darle formato a los eventos cuando se sincronizan
 import { SyncEventDto } from './dto/sync-event.dto';
+// dto para la paginación de resultados
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class EventsService {
@@ -27,7 +29,7 @@ export class EventsService {
   // método que sincroniza los eventos de todos los servicios desde TuriTop
   async syncEvents(days: 7 | 30 = 30): Promise<void> {
     // obtenemos todos los servicios de la BBDD
-    const services = await this.servicesService.findAll();
+    const services = await this.servicesService.findAllRaw();
 
     // calculamos el rango de fechas: ahora hasta ahora + días indicados (en Unix timestamps)
     const now = Math.floor(Date.now() / 1000);
@@ -84,12 +86,14 @@ export class EventsService {
     });
   }
 
-  // método para obtener eventos con filtros opcionales
+  // método para obtener eventos con filtros opcionales y paginación
   async findAll(
     serviceId?: number,
     startTimestamp?: number,
     endTimestamp?: number,
-  ): Promise<Event[]> {
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Event>> {
     const query = this.eventRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.service', 'service');
@@ -104,7 +108,23 @@ export class EventsService {
       query.andWhere('event.event_time <= :endTimestamp', { endTimestamp });
     }
 
-    return await query.getMany();
+    // ordenamos por fecha de evento
+    query.orderBy('event.event_time', 'ASC');
+
+    // aplicamos la paginación
+    const total = await query.getCount();
+    const data = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para recuperar un evento específico por servicio y timestamp

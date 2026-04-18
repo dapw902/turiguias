@@ -9,6 +9,8 @@ import { Service } from './service.entity';
 import { SyncServiceDto } from './dto/sync-service.dto';
 // importamos el servicio TuriTop para la sincronización de servicios
 import { TuritopService } from '../turitop/turitop.service';
+// dto para la paginación de resultados
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class ServicesService {
@@ -20,9 +22,28 @@ export class ServicesService {
     private readonly turitopService: TuritopService,
   ) {}
 
-  // método para obtener el listado entero de los servicios
-  async findAll(): Promise<Service[]> {
-    return await this.servicesRepository.find();
+  // método para obtener el listado entero de los servicios con paginación
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Service>> {
+    // contamos el total de servicios
+    const total = await this.servicesRepository.count();
+
+    // obtenemos los servicios de la página solicitada
+    const data = await this.servicesRepository.find({
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para recuperar un servicio específico
@@ -73,5 +94,10 @@ export class ServicesService {
   // método para eliminar un servicio
   async remove(id: number): Promise<void> {
     await this.servicesRepository.delete(id);
+  }
+
+  // método interno para obtener todos los servicios sin paginación
+  async findAllRaw(): Promise<Service[]> {
+    return await this.servicesRepository.find();
   }
 }

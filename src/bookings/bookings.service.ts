@@ -11,6 +11,8 @@ import { TuritopService } from '../turitop/turitop.service';
 import { EventsService } from '../events/events.service';
 // importamos el DTO para darle formato a las resevas cuando se sincronizan
 import { SyncBookingDto } from './dto/sync-booking.dto';
+// dto para la paginación de resultados
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class BookingsService {
@@ -104,11 +106,29 @@ export class BookingsService {
     }
   }
 
-  // método para obtener todas las reservas
-  async findAll(): Promise<Booking[]> {
-    return await this.bookingRepository.find({
+  // método para obtener todas las reservas con paginación
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedResponseDto<Booking>> {
+    // contamos el total de reservas
+    const total = await this.bookingRepository.count();
+
+    // obtenemos las reservas de la página solicitada
+    const data = await this.bookingRepository.find({
       relations: ['event', 'group'],
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // método para obtener las reservas de un evento específico

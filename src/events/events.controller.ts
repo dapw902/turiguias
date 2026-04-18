@@ -12,6 +12,8 @@ import { EventsService } from './events.service';
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// dto para la paginación de resultados
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Roles(UserRole.ADMIN)
 @Controller('events')
@@ -25,11 +27,14 @@ export class EventsController {
     serviceId?: number,
     @Query('startTimestamp') startTimestamp?: string,
     @Query('endTimestamp') endTimestamp?: string,
+    @Query() pagination?: PaginationDto,
   ) {
     return this.eventsService.findAll(
       serviceId,
       startTimestamp ? parseInt(startTimestamp) : undefined,
       endTimestamp ? parseInt(endTimestamp) : undefined,
+      pagination?.page,
+      pagination?.limit,
     );
   }
 
