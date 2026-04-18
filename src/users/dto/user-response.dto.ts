@@ -11,6 +11,7 @@ export class UserResponseDto {
   role!: UserRole;
   phone!: string | null;
   notes!: string | null;
+  photo!: string | null;
 
   static fromEntity(user: User): UserResponseDto {
     const dto = new UserResponseDto();
@@ -20,6 +21,7 @@ export class UserResponseDto {
     dto.role = user.role;
     dto.phone = user.phone;
     dto.notes = user.notes;
+    dto.photo = user.photo ?? null;
     return dto;
   }
 }

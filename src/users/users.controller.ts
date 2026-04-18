@@ -22,6 +22,14 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from './user.entity';
 // dto para la paginación de resultados
 import { PaginationDto } from '../common/dto/pagination.dto';
+// UseInterceptors intercepta la petición y procesa el archivo
+// UploadedFile es un decorador para acceder al archivo subido
+import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+// configuración de multer para guardar archivos en disco
+import { diskStorage } from 'multer';
+// para obtener la extensión del archivo original
+import { extname } from 'path';
 
 @Controller('users')
 export class UsersController {
@@ -62,5 +70,38 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  // endpoint para subir la foto de perfil de un usuario
+  @Roles(UserRole.ADMIN)
+  @Post(':id/photo')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: './uploads/photos',
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `${uniqueName}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        // solo permitimos imágenes
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          cb(new Error('Solo se permiten imágenes'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB máximo
+    }),
+  )
+  uploadPhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.updatePhoto(
+      id,
+      `/uploads/photos/${file.filename}`,
+    );
   }
 }

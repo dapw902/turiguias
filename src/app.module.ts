@@ -27,6 +27,9 @@ import { GroupsModule } from './groups/groups.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+// para servir archivos estáticos (las fotos de perfil)
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -47,6 +50,11 @@ import { WebhooksModule } from './webhooks/webhooks.module';
         synchronize: false,
       }),
       inject: [ConfigService],
+    }),
+    // Sirve los archivos estáticos de la carpeta uploads (fotos de perfil)
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
     }),
 
     UsersModule,

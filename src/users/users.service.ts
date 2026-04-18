@@ -137,4 +137,11 @@ export class UsersService {
       select: ['id', 'email', 'password', 'role', 'must_change_password'],
     });
   }
+
+  // método para actualizar la foto de perfil de un usuario
+  async updatePhoto(id: number, photoPath: string): Promise<UserResponseDto> {
+    await this.usersRepository.update(id, { photo: photoPath });
+    const user = await this.usersRepository.findOne({ where: { id } });
+    return UserResponseDto.fromEntity(user!);
+  }
 }

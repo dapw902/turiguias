@@ -40,4 +40,7 @@ export class User {
 
   @Column({ default: false, select: false })
   must_change_password!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  photo!: string | null;
 }
