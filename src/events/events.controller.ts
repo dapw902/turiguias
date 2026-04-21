@@ -27,6 +27,7 @@ export class EventsController {
     serviceId?: number,
     @Query('startTimestamp') startTimestamp?: string,
     @Query('endTimestamp') endTimestamp?: string,
+    @Query('withBookings') withBookings?: string,
     @Query() pagination?: PaginationDto,
   ) {
     return this.eventsService.findAll(
@@ -35,6 +36,7 @@ export class EventsController {
       endTimestamp ? parseInt(endTimestamp) : undefined,
       pagination?.page,
       pagination?.limit,
+      withBookings === 'true',
     );
   }
 

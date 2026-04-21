@@ -98,6 +98,7 @@ export class EventsService {
     endTimestamp?: number,
     page: number = 1,
     limit: number = 20,
+    withBookings?: boolean,
   ): Promise<PaginatedResponseDto<object>> {
     const query = this.eventRepository
       .createQueryBuilder('event')
@@ -118,6 +119,12 @@ export class EventsService {
     }
     if (endTimestamp) {
       query.andWhere('event.event_time <= :endTimestamp', { endTimestamp });
+    }
+    // si withBookings es true, solo devolvemos eventos con reservas activas
+    if (withBookings) {
+      query.andWhere(
+        `(SELECT COUNT(*) FROM bookings b WHERE b.event_id = event.id AND b.status != 'deleted') > 0`,
+      );
     }
 
     // ordenamos por fecha de evento

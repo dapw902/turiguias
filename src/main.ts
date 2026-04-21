@@ -18,6 +18,11 @@ async function bootstrap() {
   );
   // registramos el filtro global de excepciones
   app.useGlobalFilters(new HttpExceptionFilter());
+  // configuramos CORS para que no bloquee las peticiones
+  app.enableCors({
+    origin: ['http://localhost:5173', 'http://46.225.164.40'],
+    credentials: true,
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
