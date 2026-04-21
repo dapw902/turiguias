@@ -55,6 +55,7 @@ export class WebhooksService {
       case 'booking.delete':
       case 'booking.undelete':
         await this.bookingsService.syncBookings(30);
+        await this.eventsService.syncEvents(30);
         break;
       case 'event.open':
       case 'event.close':
