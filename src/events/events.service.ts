@@ -99,6 +99,7 @@ export class EventsService {
     page: number = 1,
     limit: number = 20,
     withBookings?: boolean,
+    guideId?: number,
   ): Promise<PaginatedResponseDto<object>> {
     const query = this.eventRepository
       .createQueryBuilder('event')
@@ -110,10 +111,11 @@ export class EventsService {
           AND b.status != 'deleted')`,
         'totalPax',
       );
-
+    // para devolver de un servicio específico
     if (serviceId) {
       query.andWhere('event.service_id = :serviceId', { serviceId });
     }
+    // filtrar por un rango de tiempo
     if (startTimestamp) {
       query.andWhere('event.event_time >= :startTimestamp', { startTimestamp });
     }
@@ -124,6 +126,13 @@ export class EventsService {
     if (withBookings) {
       query.andWhere(
         `(SELECT COUNT(*) FROM bookings b WHERE b.event_id = event.id AND b.status != 'deleted') > 0`,
+      );
+    }
+    // si guideId está presente, solo devolvemos eventos con grupos asignados a ese guía
+    if (guideId) {
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM groups g WHERE g.event_id = event.id AND g.user_id = :guideId)`,
+        { guideId },
       );
     }
 

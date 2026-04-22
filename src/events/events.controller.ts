@@ -28,6 +28,7 @@ export class EventsController {
     @Query('startTimestamp') startTimestamp?: string,
     @Query('endTimestamp') endTimestamp?: string,
     @Query('withBookings') withBookings?: string,
+    @Query('guideId', new ParseIntPipe({ optional: true })) guideId?: number,
     @Query() pagination?: PaginationDto,
   ) {
     return this.eventsService.findAll(
@@ -37,6 +38,7 @@ export class EventsController {
       pagination?.page,
       pagination?.limit,
       withBookings === 'true',
+      guideId,
     );
   }
 
