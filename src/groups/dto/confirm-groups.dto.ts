@@ -13,6 +13,8 @@ export class GroupItemDto {
   @IsOptional()
   @IsNumber()
   user_id!: number | null;
+  @IsOptional()
+  confirmed?: boolean;
 }
 
 // DTO para confirmar los grupos propuestos automáticamente

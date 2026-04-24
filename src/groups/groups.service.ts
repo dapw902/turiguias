@@ -17,6 +17,8 @@ import { GuideAvailabilityService } from '../guide-availability/guide-availabili
 import { EventsService } from '../events/events.service';
 // importamos dto para dar formato a la respuesta de la confirmación de los grupos
 import { ConfirmGroupsDto } from './dto/confirm-groups.dto';
+// importamos la entidad User para verificar el rol del guía
+import { User, UserRole } from '../users/user.entity';
 
 @Injectable()
 export class GroupsService {
@@ -140,9 +142,21 @@ export class GroupsService {
       let group: Group;
 
       if (groupData.group_id) {
+        // si viene user_id, verificamos que es guía y está disponible
+        if (groupData.user_id) {
+          await this.validateGuideForGroup(
+            groupData.group_id,
+            groupData.user_id,
+          );
+        }
+
         // si viene group_id, actualizamos el grupo existente
         await this.groupRepository.update(groupData.group_id, {
           user: groupData.user_id ? { id: groupData.user_id } : null,
+          // actualizamos confirmed si viene en el DTO
+          ...(groupData.confirmed !== undefined && {
+            confirmed: groupData.confirmed,
+          }),
         });
         group = (await this.groupRepository.findOne({
           where: { id: groupData.group_id },
@@ -171,6 +185,7 @@ export class GroupsService {
   }
 
   // método para asignar o cambiar el guía de un grupo
+  // método para asignar o cambiar el guía de un grupo
   async assignGuide(groupId: number, userId: number | null): Promise<Group> {
     // buscamos el grupo con su evento
     const group = await this.groupRepository.findOne({
@@ -179,23 +194,9 @@ export class GroupsService {
     });
     if (!group) throw new NotFoundException('Grupo no encontrado');
 
-    // si se asigna un guía, verificamos su disponibilidad
+    // si se asigna un guía, verificamos su disponibilidad y rol
     if (userId) {
-      const eventTime = Number(group.event.event_time);
-      const eventEndTime = eventTime + Number(group.event.duration) * 60;
-      const availableGuides =
-        await this.guideAvailabilityService.findAvailableGuidesForEvent(
-          group.event.service.id,
-          eventTime,
-          eventEndTime,
-        );
-
-      const isAvailable = availableGuides.some((g) => g.guide_id === userId);
-      if (!isAvailable) {
-        throw new BadRequestException(
-          'El guía no está disponible para este evento',
-        );
-      }
+      await this.validateGuideForGroup(groupId, userId);
     }
 
     await this.groupRepository.update(groupId, {
@@ -247,5 +248,41 @@ export class GroupsService {
       where: { event: { id: eventId } },
       relations: ['user', 'event'],
     });
+  }
+
+  // HELPERS
+  // método auxiliar para verificar que un usuario es guía y está disponible para un evento
+  private async validateGuideForGroup(
+    groupId: number,
+    userId: number,
+  ): Promise<void> {
+    // verificamos que el usuario tiene rol de guía
+    const guide = await this.groupRepository.manager.findOne(User, {
+      where: { id: userId, role: UserRole.GUIDE },
+    });
+    if (!guide) throw new BadRequestException('El usuario no es un guía');
+
+    // buscamos el grupo con su evento
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['event', 'event.service'],
+    });
+    if (!group) throw new NotFoundException('Grupo no encontrado');
+
+    // verificamos disponibilidad del guía para ese evento
+    const eventTime = Number(group.event.event_time);
+    const eventEndTime = eventTime + Number(group.event.duration) * 60;
+    const availableGuides =
+      await this.guideAvailabilityService.findAvailableGuidesForEvent(
+        group.event.service.id,
+        eventTime,
+        eventEndTime,
+      );
+
+    const isAvailable = availableGuides.some((g) => g.guide_id === userId);
+    if (!isAvailable)
+      throw new BadRequestException(
+        'El guía no está disponible para este evento',
+      );
   }
 }
