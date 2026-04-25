@@ -61,14 +61,8 @@ export class GroupsService {
       };
 
     // buscamos los guías disponibles para este evento
-    const eventTime = Number(event.event_time);
-    const eventEndTime = eventTime + Number(event.duration) * 60;
-    const availableGuides =
-      await this.guideAvailabilityService.findAvailableGuidesForEvent(
-        event.service.id,
-        eventTime,
-        eventEndTime,
-      );
+    // buscamos los guías disponibles para este evento
+    const availableGuides = await this.getAvailableGuidesForEvent(eventId);
 
     // capacidad máxima entre los guías disponibles para determinar el tamaño de grupo
     const maxCapacity =
@@ -198,7 +192,6 @@ export class GroupsService {
   }
 
   // método para asignar o cambiar el guía de un grupo
-  // método para asignar o cambiar el guía de un grupo
   async assignGuide(groupId: number, userId: number | null): Promise<Group> {
     // buscamos el grupo con su evento
     const group = await this.groupRepository.findOne({
@@ -303,7 +296,28 @@ export class GroupsService {
     }
   }
 
+  // método público para obtener los guías disponibles para un evento
+  async findAvailableGuidesForEvent(eventId: number) {
+    return this.getAvailableGuidesForEvent(eventId);
+  }
+
   // HELPERS
+
+  // método auxiliar para obtener los guías disponibles para un evento
+  private async getAvailableGuidesForEvent(eventId: number) {
+    const event = await this.eventsService.findOne(eventId);
+    if (!event) throw new NotFoundException('Evento no encontrado');
+
+    const eventTime = Number(event.event_time);
+    const eventEndTime = eventTime + Number(event.duration) * 60;
+
+    return this.guideAvailabilityService.findAvailableGuidesForEvent(
+      event.service.id,
+      eventTime,
+      eventEndTime,
+    );
+  }
+
   // método auxiliar para verificar que un usuario es guía y está disponible para un evento
   private async validateGuideForGroup(
     groupId: number,

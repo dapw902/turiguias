@@ -79,4 +79,11 @@ export class GroupsController {
   ) {
     return this.groupsService.deleteGroups(eventId, groupId);
   }
+
+  // endpoint para obtener los guías disponibles para un evento
+  @Roles(UserRole.ADMIN)
+  @Get('available-guides/:eventId')
+  findAvailableGuidesForEvent(@Param('eventId', ParseIntPipe) eventId: number) {
+    return this.groupsService.findAvailableGuidesForEvent(eventId);
+  }
 }
