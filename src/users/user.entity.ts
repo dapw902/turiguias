@@ -38,7 +38,7 @@ export class User {
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 
-  @Column({ default: false, select: false })
+  @Column({ default: false })
   must_change_password!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

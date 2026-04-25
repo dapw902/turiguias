@@ -3,7 +3,7 @@ import { User } from '../user.entity';
 import { UserRole } from '../user.entity';
 
 // DTO que define los campos que devolvemos al frontend
-// excluye password y must_change_password
+// excluye password
 export class UserResponseDto {
   id!: number;
   name!: string;
@@ -12,6 +12,7 @@ export class UserResponseDto {
   phone!: string | null;
   notes!: string | null;
   photo!: string | null;
+  must_change_password!: boolean;
 
   static fromEntity(user: User): UserResponseDto {
     const dto = new UserResponseDto();
@@ -22,6 +23,7 @@ export class UserResponseDto {
     dto.phone = user.phone;
     dto.notes = user.notes;
     dto.photo = user.photo ?? null;
+    dto.must_change_password = user.must_change_password;
     return dto;
   }
 }
