@@ -76,6 +76,22 @@ export class GroupsService {
         ? Math.max(...availableGuides.map((g) => g.capacity))
         : 0;
 
+    // si no hay guías disponibles, agrupamos todo en un solo grupo con needs_attention
+    if (maxCapacity === 0) {
+      return {
+        groups: [
+          {
+            bookings: activeBookings,
+            totalPax: activeBookings.reduce((sum, b) => sum + b.pax, 0),
+            needs_attention: true,
+          },
+        ],
+        available_guides: [],
+        message:
+          'No hay guías disponibles para este evento. Revisión manual necesaria.',
+      };
+    }
+
     // ordenamos las reservas de mayor a menor pax para optimizar el llenado
     const sortedBookings = [...activeBookings].sort((a, b) => b.pax - a.pax);
 
@@ -95,10 +111,7 @@ export class GroupsService {
 
     // asignamos cada reserva al grupo actual o creamos uno nuevo si no cabe
     for (const booking of sortedBookings) {
-      if (
-        maxCapacity === 0 ||
-        currentGroup.totalPax + booking.pax > maxCapacity
-      ) {
+      if (currentGroup.totalPax + booking.pax > maxCapacity) {
         // si el grupo actual tiene reservas, lo guardamos y creamos uno nuevo
         if (currentGroup.bookings.length > 0) {
           proposedGroups.push(currentGroup);
@@ -107,7 +120,7 @@ export class GroupsService {
           bookings: [booking],
           totalPax: booking.pax,
           // needs_attention si la reserva sola ya supera la capacidad máxima
-          needs_attention: maxCapacity === 0 || booking.pax > maxCapacity,
+          needs_attention: booking.pax > maxCapacity,
         };
       } else {
         currentGroup.bookings.push(booking);
