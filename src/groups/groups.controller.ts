@@ -16,6 +16,8 @@ import { ConfirmGroupsDto } from './dto/confirm-groups.dto';
 // importamos la entidad UserRole y el decorador para la verificación de roles
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/user.entity';
+// importamos el pipe para procesar valor de la ruta string a número
+import { ParseNullableIntPipe } from '../common/pipes/parse-nullable-int.pipe';
 
 @Controller('groups')
 export class GroupsController {
@@ -51,12 +53,12 @@ export class GroupsController {
     return this.groupsService.findByEvent(eventId);
   }
 
-  // endpoint para mover una reserva de un grupo a otro
+  // endpoint para mover una reserva a un grupo, o desasignarla (targetGroupId = 0)
   @Roles(UserRole.ADMIN)
   @Patch('assign-booking/:bookingId/to/:targetGroupId')
   assignBookingToGroup(
     @Param('bookingId', ParseIntPipe) bookingId: number,
-    @Param('targetGroupId', ParseIntPipe) targetGroupId: number,
+    @Param('targetGroupId', ParseNullableIntPipe) targetGroupId: number | null,
   ) {
     return this.groupsService.assignBookingToGroup(bookingId, targetGroupId);
   }

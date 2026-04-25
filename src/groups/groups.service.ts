@@ -222,10 +222,10 @@ export class GroupsService {
     })) as Group;
   }
 
-  // método para mover una reserva de un grupo a otro
+  // método para mover una reserva de un grupo a otro o desasignarla
   async assignBookingToGroup(
     bookingId: number,
-    targetGroupId: number,
+    targetGroupId: number | null,
   ): Promise<void> {
     // buscamos la reserva
     const booking = await this.bookingRepository.findOne({
@@ -233,6 +233,12 @@ export class GroupsService {
       relations: ['event', 'group'],
     });
     if (!booking) throw new NotFoundException('Reserva no encontrada');
+
+    // si targetGroupId es null, desasignamos la reserva de su grupo actual
+    if (targetGroupId === null) {
+      await this.bookingRepository.update(bookingId, { group: null });
+      return;
+    }
 
     // buscamos el grupo destino
     const targetGroup = await this.groupRepository.findOne({
