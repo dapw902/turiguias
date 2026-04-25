@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   ParseIntPipe,
+  Delete,
 } from '@nestjs/common';
 // importamos el servicio
 import { GroupsService } from './groups.service';
@@ -58,5 +59,22 @@ export class GroupsController {
     @Param('targetGroupId', ParseIntPipe) targetGroupId: number,
   ) {
     return this.groupsService.assignBookingToGroup(bookingId, targetGroupId);
+  }
+
+  // endpoint para borrar todos los grupos no confirmados de un evento
+  @Roles(UserRole.ADMIN)
+  @Delete('delete/:eventId')
+  deleteUnconfirmedGroups(@Param('eventId', ParseIntPipe) eventId: number) {
+    return this.groupsService.deleteGroups(eventId);
+  }
+
+  // endpoint para borrar un grupo específico no confirmado
+  @Roles(UserRole.ADMIN)
+  @Delete('delete/:eventId/:groupId')
+  deleteGroup(
+    @Param('eventId', ParseIntPipe) eventId: number,
+    @Param('groupId', ParseIntPipe) groupId: number,
+  ) {
+    return this.groupsService.deleteGroups(eventId, groupId);
   }
 }

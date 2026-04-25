@@ -263,6 +263,40 @@ export class GroupsService {
     });
   }
 
+  // método para borrar grupos no confirmados de un evento
+  // si viene groupId borra solo ese grupo, si no borra todos los no confirmados del evento
+  async deleteGroups(eventId: number, groupId?: number): Promise<void> {
+    if (groupId) {
+      // borramos un grupo específico
+      const group = await this.groupRepository.findOne({
+        where: { id: groupId, event: { id: eventId } },
+      });
+      if (!group) throw new NotFoundException('Grupo no encontrado');
+      if (group.confirmed) {
+        throw new BadRequestException(
+          'El grupo está confirmado. Desmárcalo primero para poder borrarlo',
+        );
+      }
+      await this.bookingRepository.update(
+        { group: { id: groupId } },
+        { group: null },
+      );
+      await this.groupRepository.delete(groupId);
+    } else {
+      // borramos todos los grupos no confirmados del evento
+      const unconfirmedGroups = await this.groupRepository.find({
+        where: { event: { id: eventId }, confirmed: false },
+      });
+      for (const group of unconfirmedGroups) {
+        await this.bookingRepository.update(
+          { group: { id: group.id } },
+          { group: null },
+        );
+        await this.groupRepository.delete(group.id);
+      }
+    }
+  }
+
   // HELPERS
   // método auxiliar para verificar que un usuario es guía y está disponible para un evento
   private async validateGuideForGroup(
