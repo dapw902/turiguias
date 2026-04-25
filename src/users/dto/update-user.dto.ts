@@ -24,7 +24,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(8)
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   // Validación adicional - para ACTIVAR en producción
   // @Matches(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/, {
   //   message: 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial'
