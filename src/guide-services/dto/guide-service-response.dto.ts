@@ -5,6 +5,7 @@ export class GuideServiceByUserResponseDto {
   services!: {
     id: number;
     service_name: string;
+    turitop_product_id: string;
     timezone: string;
     capacity: number;
   }[];

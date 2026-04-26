@@ -153,6 +153,7 @@ export class GuideServicesService {
       map.get(gs.user.id)!.services.push({
         id: gs.id,
         service_name: gs.service.name,
+        turitop_product_id: gs.service.turitop_product_id,
         timezone: gs.service.timezone,
         capacity: gs.capacity,
       });
