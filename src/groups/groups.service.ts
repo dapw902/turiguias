@@ -245,7 +245,11 @@ export class GroupsService {
   }
 
   // método para asignar o cambiar el guía de un grupo
-  async assignGuide(groupId: number, userId: number | null): Promise<Group> {
+  async assignGuide(
+    groupId: number,
+    userId: number | null,
+    manualCapacity?: number,
+  ): Promise<Group> {
     // buscamos el grupo con su evento
     const group = await this.groupRepository.findOne({
       where: { id: groupId },
@@ -263,9 +267,9 @@ export class GroupsService {
       );
     }
 
-    // obtenemos la capacidad del guía para este servicio
-    let capacity: number | null = null;
-    if (userId) {
+    // calculamos la capacidad (manual, si viene, o la del guía configurada para ese servicio)
+    let capacity: number | null = manualCapacity ?? null;
+    if (!manualCapacity && userId) {
       const guideService = await this.guideServiceRepository.findOne({
         where: {
           user: { id: userId },
@@ -278,6 +282,8 @@ export class GroupsService {
     await this.groupRepository.update(groupId, {
       user: userId ? { id: userId } : null,
       capacity,
+      // si viene capacidad manual limpiamos needs_attention
+      ...(manualCapacity !== undefined && { needs_attention: false }),
     });
 
     return (await this.groupRepository.findOne({

@@ -44,8 +44,9 @@ export class GroupsController {
   assignGuide(
     @Param('id', ParseIntPipe) id: number,
     @Body('user_id') userId: number | null,
+    @Body('capacity') capacity?: number,
   ) {
-    return this.groupsService.assignGuide(id, userId);
+    return this.groupsService.assignGuide(id, userId, capacity);
   }
 
   // endpoint para obtener los grupos de un evento
