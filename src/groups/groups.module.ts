@@ -11,10 +11,12 @@ import { Booking } from '../bookings/booking.entity';
 import { GuideAvailabilityModule } from '../guide-availability/guide-availability.module';
 // importamos el módulo de Events para buscar el evento
 import { EventsModule } from '../events/events.module';
+// importamos el módulo de GuideServices para buscar el evento por guía
+import { GuideService } from '../guide-services/guide-service.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Group, Booking]),
+    TypeOrmModule.forFeature([Group, Booking, GuideService]),
     GuideAvailabilityModule,
     EventsModule,
   ],

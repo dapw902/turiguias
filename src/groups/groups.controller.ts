@@ -8,6 +8,7 @@ import {
   Body,
   ParseIntPipe,
   Delete,
+  Query,
 } from '@nestjs/common';
 // importamos el servicio
 import { GroupsService } from './groups.service';
@@ -85,5 +86,15 @@ export class GroupsController {
   @Get('available-guides/:eventId')
   findAvailableGuidesForEvent(@Param('eventId', ParseIntPipe) eventId: number) {
     return this.groupsService.findAvailableGuidesForEvent(eventId);
+  }
+
+  // endpoint para obtener los grupos asignados a un guía con paginación
+  @Get('guide/:guideId')
+  findByGuide(
+    @Param('guideId', ParseIntPipe) guideId: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.groupsService.findByGuide(guideId, page, limit);
   }
 }

@@ -19,6 +19,8 @@ import { EventsService } from '../events/events.service';
 import { ConfirmGroupsDto } from './dto/confirm-groups.dto';
 // importamos la entidad User para verificar el rol del guía
 import { User, UserRole } from '../users/user.entity';
+// importamos el servicio de GuideServices para ver los servicios por guía
+import { GuideService } from '../guide-services/guide-service.entity';
 
 @Injectable()
 export class GroupsService {
@@ -33,6 +35,8 @@ export class GroupsService {
     private readonly guideAvailabilityService: GuideAvailabilityService,
     // inyectamos el servicio de Events
     private readonly eventsService: EventsService,
+    @InjectRepository(GuideService)
+    private readonly guideServiceRepository: Repository<GuideService>,
   ) {}
 
   // método para generar una propuesta de grupos para un evento
@@ -60,7 +64,6 @@ export class GroupsService {
         message: 'No hay reservas activas para este evento',
       };
 
-    // buscamos los guías disponibles para este evento
     // buscamos los guías disponibles para este evento
     const availableGuides = await this.getAvailableGuidesForEvent(eventId);
 
@@ -155,6 +158,18 @@ export class GroupsService {
             groupData.group_id,
             groupData.user_id,
           );
+          // y que no tenga ya un grupo para este evento
+          const groupForEvent = await this.groupRepository.findOne({
+            where: { id: groupData.group_id },
+            relations: ['event'],
+          });
+          if (groupForEvent) {
+            await this.validateGuideNotDuplicatedInEvent(
+              groupForEvent.event.id,
+              groupData.user_id,
+              groupData.group_id,
+            );
+          }
         }
 
         // si viene group_id, actualizamos el grupo existente
@@ -200,9 +215,14 @@ export class GroupsService {
     });
     if (!group) throw new NotFoundException('Grupo no encontrado');
 
-    // si se asigna un guía, verificamos su disponibilidad y rol
+    // verificamos disponibilidad y rol, y que el guía no tenga ya otro grupo en este evento
     if (userId) {
       await this.validateGuideForGroup(groupId, userId);
+      await this.validateGuideNotDuplicatedInEvent(
+        group.event.id,
+        userId,
+        groupId,
+      );
     }
 
     await this.groupRepository.update(groupId, {
@@ -296,9 +316,71 @@ export class GroupsService {
     }
   }
 
-  // método público para obtener los guías disponibles para un evento
+  // método para obtener los guías disponibles para un evento
   async findAvailableGuidesForEvent(eventId: number) {
     return this.getAvailableGuidesForEvent(eventId);
+  }
+
+  // método para buscar los grupos por guía
+  async findByGuide(
+    guideId: number,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<object> {
+    // contamos el total de grupos del guía
+    const total = await this.groupRepository.count({
+      where: { user: { id: guideId } },
+    });
+
+    // obtenemos los grupos con sus relaciones ordenados por fecha del evento
+    const groups = await this.groupRepository.find({
+      where: { user: { id: guideId } },
+      relations: ['event', 'event.service'],
+      order: { event: { event_time: 'DESC' } },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    // para cada grupo calculamos el pax total de sus reservas activas
+    const data = await Promise.all(
+      groups.map(async (group) => {
+        // reservas activas del grupo
+        const bookings = await this.bookingRepository.find({
+          where: { group: { id: group.id } },
+        });
+        const activeBookings = bookings.filter((b) => b.status !== 'deleted');
+        const totalPax = activeBookings.reduce((sum, b) => sum + b.pax, 0);
+
+        // capacidad del guía para ese servicio
+        const guideService = await this.guideServiceRepository.findOne({
+          where: {
+            user: { id: guideId },
+            service: { id: group.event.service.id },
+          },
+        });
+
+        return {
+          group_id: group.id,
+          confirmed: group.confirmed,
+          needs_attention: group.needs_attention,
+          event_id: group.event.id,
+          event_time: group.event.event_time,
+          service_name: group.event.service.name,
+          service_timezone: group.event.service.timezone,
+          capacity: guideService?.capacity ?? null,
+          total_pax: totalPax,
+          booking_count: activeBookings.length,
+        };
+      }),
+    );
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // HELPERS
@@ -316,6 +398,29 @@ export class GroupsService {
       eventTime,
       eventEndTime,
     );
+  }
+
+  // método auxiliar para verificar que un guía no tiene ya un grupo asignado en el mismo evento
+  private async validateGuideNotDuplicatedInEvent(
+    eventId: number,
+    guideId: number,
+    excludeGroupId?: number,
+  ): Promise<void> {
+    const query = this.groupRepository
+      .createQueryBuilder('g')
+      .where('g.event_id = :eventId', { eventId })
+      .andWhere('g.user_id = :guideId', { guideId });
+
+    if (excludeGroupId) {
+      query.andWhere('g.id != :excludeGroupId', { excludeGroupId });
+    }
+
+    const existing = await query.getOne();
+    if (existing) {
+      throw new BadRequestException(
+        'Este guía ya tiene un grupo asignado en este evento',
+      );
+    }
   }
 
   // método auxiliar para verificar que un usuario es guía y está disponible para un evento
