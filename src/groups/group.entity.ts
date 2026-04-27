@@ -27,6 +27,6 @@ export class Group {
   @Column({ type: 'tinyint', width: 1, default: 0 })
   needs_attention!: boolean;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'int', unsigned: true, nullable: true, default: null })
   capacity!: number | null;
 }
