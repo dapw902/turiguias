@@ -180,7 +180,6 @@ export class GroupsService {
                 },
               })
             : null;
-
           // actualizamos el grupo existente con guía y capacidad
           await this.groupRepository.update(groupData.group_id, {
             user: { id: groupData.user_id },
@@ -191,10 +190,20 @@ export class GroupsService {
             }),
           });
         } else {
-          // si viene group_id sin user_id, solo actualizamos confirmed si viene
+          // no viene user_id — solo actualizamos confirmed si viene
+          // pero antes verificamos que no se intente confirmar sin guía asignado
+          if (groupData.confirmed === true) {
+            const groupToConfirm = await this.groupRepository.findOne({
+              where: { id: groupData.group_id },
+              relations: ['user'],
+            });
+            if (!groupToConfirm?.user) {
+              throw new BadRequestException(
+                'No se puede confirmar un grupo sin guía asignado',
+              );
+            }
+          }
           await this.groupRepository.update(groupData.group_id, {
-            user: null,
-            capacity: null,
             ...(groupData.confirmed !== undefined && {
               confirmed: groupData.confirmed,
             }),
