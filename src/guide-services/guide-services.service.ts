@@ -94,6 +94,14 @@ export class GuideServicesService {
       relations: ['service'],
     });
 
+    // verificamos que el servicio no esté ya asignado al guía
+    const alreadyAssigned = existingServices.some(
+      (gs) => gs.service.id === createUpdateGuideServiceDto.service_id,
+    );
+    if (alreadyAssigned) {
+      throw new ConflictException('Este servicio ya está asignado a este guía');
+    }
+
     // si ya tiene servicios asignados, verificamos que la zona horaria coincida
     // un guía solo puede trabajar en una zona horaria
     if (existingServices.length > 0) {
@@ -123,8 +131,6 @@ export class GuideServicesService {
   ): Promise<GuideService | null> {
     // hacermos un Update en la BBDD para actualizar la relación
     await this.guideServiceRepository.update(id, {
-      user: { id: createUpdateGuideServiceDto.user_id },
-      service: { id: createUpdateGuideServiceDto.service_id },
       capacity: createUpdateGuideServiceDto.capacity,
     });
     // recuperamos el registro actualizado
