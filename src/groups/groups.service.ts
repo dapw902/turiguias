@@ -161,7 +161,7 @@ export class GroupsService {
           // y que no tenga ya un grupo para este evento
           const groupForEvent = await this.groupRepository.findOne({
             where: { id: groupData.group_id },
-            relations: ['event'],
+            relations: ['event', 'event.service'],
           });
           if (groupForEvent) {
             await this.validateGuideNotDuplicatedInEvent(
@@ -170,26 +170,64 @@ export class GroupsService {
               groupData.group_id,
             );
           }
+
+          // obtenemos la capacidad del guía para este servicio
+          const guideService = groupForEvent
+            ? await this.guideServiceRepository.findOne({
+                where: {
+                  user: { id: groupData.user_id },
+                  service: { id: groupForEvent.event.service.id },
+                },
+              })
+            : null;
+
+          // actualizamos el grupo existente con guía y capacidad
+          await this.groupRepository.update(groupData.group_id, {
+            user: { id: groupData.user_id },
+            capacity: guideService?.capacity ?? null,
+            // actualizamos confirmed si viene en el DTO
+            ...(groupData.confirmed !== undefined && {
+              confirmed: groupData.confirmed,
+            }),
+          });
+        } else {
+          // si viene group_id sin user_id, solo actualizamos confirmed si viene
+          await this.groupRepository.update(groupData.group_id, {
+            user: null,
+            capacity: null,
+            ...(groupData.confirmed !== undefined && {
+              confirmed: groupData.confirmed,
+            }),
+          });
         }
 
-        // si viene group_id, actualizamos el grupo existente
-        await this.groupRepository.update(groupData.group_id, {
-          user: groupData.user_id ? { id: groupData.user_id } : null,
-          // actualizamos confirmed si viene en el DTO
-          ...(groupData.confirmed !== undefined && {
-            confirmed: groupData.confirmed,
-          }),
-        });
         group = (await this.groupRepository.findOne({
           where: { id: groupData.group_id },
         })) as Group;
       } else {
-        // si no viene group_id, creamos un grupo nuevo y lo registramos en la BBDD
+        // si no viene group_id, creamos un grupo nuevo
+
+        // obtenemos la capacidad del guía para este servicio si viene user_id
+        let capacity: number | null = null;
+        if (groupData.user_id) {
+          const event = await this.eventsService.findOne(dto.event_id);
+          if (event) {
+            const guideService = await this.guideServiceRepository.findOne({
+              where: {
+                user: { id: groupData.user_id },
+                service: { id: event.service.id },
+              },
+            });
+            capacity = guideService?.capacity ?? null;
+          }
+        }
+
         group = await this.groupRepository.save({
           event: { id: dto.event_id },
           user: groupData.user_id ? { id: groupData.user_id } : null,
           confirmed: false,
-          needs_attention: false,
+          needs_attention: groupData.needs_attention ?? false,
+          capacity,
         });
       }
 
@@ -225,8 +263,21 @@ export class GroupsService {
       );
     }
 
+    // obtenemos la capacidad del guía para este servicio
+    let capacity: number | null = null;
+    if (userId) {
+      const guideService = await this.guideServiceRepository.findOne({
+        where: {
+          user: { id: userId },
+          service: { id: group.event.service.id },
+        },
+      });
+      capacity = guideService?.capacity ?? null;
+    }
+
     await this.groupRepository.update(groupId, {
       user: userId ? { id: userId } : null,
+      capacity,
     });
 
     return (await this.groupRepository.findOne({
@@ -351,14 +402,6 @@ export class GroupsService {
         const activeBookings = bookings.filter((b) => b.status !== 'deleted');
         const totalPax = activeBookings.reduce((sum, b) => sum + b.pax, 0);
 
-        // capacidad del guía para ese servicio
-        const guideService = await this.guideServiceRepository.findOne({
-          where: {
-            user: { id: guideId },
-            service: { id: group.event.service.id },
-          },
-        });
-
         return {
           group_id: group.id,
           confirmed: group.confirmed,
@@ -367,7 +410,7 @@ export class GroupsService {
           event_time: group.event.event_time,
           service_name: group.event.service.name,
           service_timezone: group.event.service.timezone,
-          capacity: guideService?.capacity ?? null,
+          capacity: group.capacity,
           total_pax: totalPax,
           booking_count: activeBookings.length,
         };

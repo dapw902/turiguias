@@ -15,6 +15,8 @@ export class GroupItemDto {
   user_id!: number | null;
   @IsOptional()
   confirmed?: boolean;
+  @IsOptional()
+  needs_attention?: boolean;
 }
 
 // DTO para confirmar los grupos propuestos automáticamente

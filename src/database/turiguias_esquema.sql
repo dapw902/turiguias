@@ -104,7 +104,8 @@ CREATE TABLE groups (
   event_id    INT UNSIGNED  NOT NULL,
   user_id     INT UNSIGNED  DEFAULT NULL,
   confirmed   BOOLEAN       NOT NULL DEFAULT FALSE,
-  `needs_attention` TINYINT(1) NOT NULL DEFAULT 0,
+  needs_attention TINYINT(1) NOT NULL DEFAULT 0,
+  capacity    INT UNSIGNED  DEFAULT NULL,
   PRIMARY KEY (id),
   CONSTRAINT fk_gr_event FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
   CONSTRAINT fk_gr_user  FOREIGN KEY (user_id)  REFERENCES users  (id) ON DELETE SET NULL

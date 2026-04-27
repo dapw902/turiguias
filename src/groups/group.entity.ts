@@ -24,6 +24,9 @@ export class Group {
   @Column({ default: false })
   confirmed!: boolean;
 
-  @Column({ default: false })
+  @Column({ type: 'tinyint', width: 1, default: 0 })
   needs_attention!: boolean;
+
+  @Column({ nullable: true, default: null })
+  capacity!: number | null;
 }
