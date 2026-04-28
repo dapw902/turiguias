@@ -515,4 +515,11 @@ export class GroupsService {
         'El guía no está disponible para este evento',
       );
   }
+  // método para obtener las reservas de un grupo específico
+  async findBookingsByGroup(groupId: number): Promise<Booking[]> {
+    const bookings = await this.bookingRepository.find({
+      where: { group: { id: groupId } },
+    });
+    return bookings.filter((b) => b.status !== 'deleted');
+  }
 }

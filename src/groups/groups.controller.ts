@@ -100,4 +100,11 @@ export class GroupsController {
   ) {
     return this.groupsService.findByGuide(guideId, page, limit);
   }
+
+  // endpoint para obtener las reservas de un grupo específico
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
+  @Get(':groupId/bookings')
+  findBookingsByGroup(@Param('groupId', ParseIntPipe) groupId: number) {
+    return this.groupsService.findBookingsByGroup(groupId);
+  }
 }
