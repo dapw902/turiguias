@@ -171,19 +171,9 @@ export class GroupsService {
             );
           }
 
-          // obtenemos la capacidad del guía para este servicio
-          const guideService = groupForEvent
-            ? await this.guideServiceRepository.findOne({
-                where: {
-                  user: { id: groupData.user_id },
-                  service: { id: groupForEvent.event.service.id },
-                },
-              })
-            : null;
-          // actualizamos el grupo existente con guía y capacidad
+          // actualizamos el grupo existente
           await this.groupRepository.update(groupData.group_id, {
             user: { id: groupData.user_id },
-            capacity: guideService?.capacity ?? null,
             // actualizamos confirmed si viene en el DTO
             ...(groupData.confirmed !== undefined && {
               confirmed: groupData.confirmed,
