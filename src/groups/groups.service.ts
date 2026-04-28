@@ -515,11 +515,31 @@ export class GroupsService {
         'El guía no está disponible para este evento',
       );
   }
-  // método para obtener las reservas de un grupo específico
-  async findBookingsByGroup(groupId: number): Promise<Booking[]> {
+
+  // método para obtener las reservas de un grupo específico (con info del grupo y evento)
+  async findBookingsByGroup(groupId: number): Promise<object> {
+    // buscamos el grupo con su evento y usuario
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['event', 'event.service', 'user'],
+    });
+    if (!group) throw new NotFoundException('Grupo no encontrado');
+
     const bookings = await this.bookingRepository.find({
       where: { group: { id: groupId } },
     });
-    return bookings.filter((b) => b.status !== 'deleted');
+    const activeBookings = bookings.filter((b) => b.status !== 'deleted');
+
+    return {
+      group_id: group.id,
+      confirmed: group.confirmed,
+      event_time: group.event.event_time,
+      service_name: group.event.service.name,
+      service_timezone: group.event.service.timezone,
+      guide_name: group.user?.name ?? null,
+      capacity: group.capacity,
+      total_pax: activeBookings.reduce((sum, b) => sum + b.pax, 0),
+      bookings: activeBookings,
+    };
   }
 }
