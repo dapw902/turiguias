@@ -15,12 +15,12 @@ import { UserRole } from '../users/user.entity';
 // dto para la paginación de resultados
 import { PaginationDto } from '../common/dto/pagination.dto';
 
-@Roles(UserRole.ADMIN)
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   // endpoint para obtener eventos con filtros opcionales por fecha y servicio
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get()
   findAll(
     @Query('serviceId', new ParseIntPipe({ optional: true }))
@@ -43,12 +43,14 @@ export class EventsController {
   }
 
   // endpoint para obtener un evento específico por id
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.eventsService.findOne(id);
   }
 
   // endpoint para sincronizar eventos desde TuriTop — solo admin
+  @Roles(UserRole.ADMIN)
   @Post('sync-events')
   syncEvents(@Query('days') days?: string) {
     const parsedDays = days === '7' ? 7 : 30;

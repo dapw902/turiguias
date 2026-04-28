@@ -43,6 +43,7 @@ export class UsersController {
   }
 
   // endpoint para recuperar un usuario específico
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findOne(id);
@@ -73,7 +74,7 @@ export class UsersController {
   }
 
   // endpoint para subir la foto de perfil de un usuario
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Post(':id/photo')
   @UseInterceptors(
     FileInterceptor('photo', {

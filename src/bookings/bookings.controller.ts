@@ -29,13 +29,14 @@ export class BookingsController {
   }
 
   // endpoint para recuperar todas las reservas
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get()
   findAll(@Query() pagination: PaginationDto) {
     return this.bookingsService.findAll(pagination.page, pagination.limit);
   }
 
   // endpoint para recuperar todas las reservas según un id de evento específico
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get('event/:id')
   findByEvent(@Param('id', ParseIntPipe) id: number) {
     return this.bookingsService.findByEvent(id);

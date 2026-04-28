@@ -50,6 +50,7 @@ export class GroupsController {
   }
 
   // endpoint para obtener los grupos de un evento
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get('event/:eventId')
   findByEvent(@Param('eventId', ParseIntPipe) eventId: number) {
     return this.groupsService.findByEvent(eventId);
@@ -90,6 +91,7 @@ export class GroupsController {
   }
 
   // endpoint para obtener los grupos asignados a un guía con paginación
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get('guide/:guideId')
   findByGuide(
     @Param('guideId', ParseIntPipe) guideId: number,

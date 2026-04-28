@@ -27,7 +27,7 @@ export class GuideAvailabilityController {
   ) {}
 
   // endpoint para obtener las disponibilidades con filtros opcionales
-  // endpoint para obtener las disponibilidades con filtros opcionales
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get()
   findAll(
     @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,

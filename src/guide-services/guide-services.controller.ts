@@ -27,6 +27,7 @@ export class GuideServicesController {
 
   // endpoint para obtener relaciones guía-servicio con filtros opcionales
   // (todos, por guía o servicio)
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get()
   findAll(
     @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
