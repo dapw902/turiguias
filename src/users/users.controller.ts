@@ -71,6 +71,16 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  // endpoint para que el usuario logueado actualice su propio perfil
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
+  @Patch('me')
+  updateSelf(
+    @Request() req: { user: { id: number } },
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(req.user.id, updateUserDto);
+  }
+
   // endpoint para actualizar a un usuario
   @Roles(UserRole.ADMIN)
   @Patch(':id')
