@@ -107,4 +107,11 @@ export class GroupsController {
   findBookingsByGroup(@Param('groupId', ParseIntPipe) groupId: number) {
     return this.groupsService.findBookingsByGroup(groupId);
   }
+
+  // endpoint para obtener grupos con needs_attention para el panel de notificaciones
+  @Roles(UserRole.ADMIN)
+  @Get('attention')
+  findGroupsWithAttention() {
+    return this.groupsService.findGroupsWithAttention();
+  }
 }

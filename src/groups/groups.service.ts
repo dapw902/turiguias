@@ -564,4 +564,23 @@ export class GroupsService {
       needs_attention: totalPax > group.capacity,
     });
   }
+
+  // método para obtener todos los grupos con needs_attention para el panel de notificaciones
+  async findGroupsWithAttention(): Promise<object[]> {
+    const groups = await this.groupRepository.find({
+      where: { needs_attention: true },
+      relations: ['event', 'event.service', 'user'],
+    });
+
+    return groups.map((group) => ({
+      group_id: group.id,
+      event_id: group.event.id,
+      event_time: group.event.event_time,
+      service_name: group.event.service.name,
+      service_timezone: group.event.service.timezone,
+      turitop_product_id: group.event.service.turitop_product_id,
+      // si no tiene guía, es por falta de guías. Si tiene, es por capacidad
+      reason: group.user ? 'capacity' : 'no_guide',
+    }));
+  }
 }
