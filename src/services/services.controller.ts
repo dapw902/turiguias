@@ -22,12 +22,14 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   // endpoint para obtener el listado entero de los servicios
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get()
   findAll(@Query() pagination: PaginationDto) {
     return this.servicesService.findAll(pagination.page, pagination.limit);
   }
 
   // endpoint para recuperar un servicio específico
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.servicesService.findOne(id);

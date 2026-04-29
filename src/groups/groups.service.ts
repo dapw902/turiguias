@@ -85,7 +85,7 @@ export class GroupsService {
         ],
         available_guides: [],
         message:
-          'No hay guías disponibles para este evento. Revisión manual necesaria.',
+          'No hay guías disponibles para este evento. Revisa la configuración de los guías',
       };
     }
 
@@ -139,7 +139,7 @@ export class GroupsService {
       groups: proposedGroups,
       available_guides: availableGuides,
       message: proposedGroups.some((g) => g.needs_attention)
-        ? 'Algunos grupos necesitan atención del administrador'
+        ? 'Una o más reservas superan la capacidad máxima del guía disponible. Ajusta la capacidad manualmente antes de confirmar.'
         : 'Grupos generados correctamente',
     };
   }
