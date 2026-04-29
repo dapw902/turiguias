@@ -296,16 +296,23 @@ export class GroupsService {
     bookingId: number,
     targetGroupId: number | null,
   ): Promise<void> {
-    // buscamos la reserva
+    // buscamos la reserva con su grupo actual
     const booking = await this.bookingRepository.findOne({
       where: { id: bookingId },
       relations: ['event', 'group'],
     });
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
+    // guardamos el grupo origen antes de mover
+    const sourceGroupId = booking.group?.id ?? null;
+
     // si targetGroupId es null, desasignamos la reserva de su grupo actual
     if (targetGroupId === null) {
       await this.bookingRepository.update(bookingId, { group: null });
+      // recalculamos needs_attention del grupo origen
+      if (sourceGroupId) {
+        await this.recalculateGroupAttention(sourceGroupId);
+      }
       return;
     }
 
@@ -328,6 +335,12 @@ export class GroupsService {
     await this.bookingRepository.update(bookingId, {
       group: { id: targetGroupId },
     });
+
+    // recalculamos needs_attention en grupo origen y destino
+    if (sourceGroupId) {
+      await this.recalculateGroupAttention(sourceGroupId);
+    }
+    await this.recalculateGroupAttention(targetGroupId);
   }
 
   // método para recuperar los grupos de un evento específico
@@ -431,6 +444,33 @@ export class GroupsService {
     };
   }
 
+  // método para obtener las reservas de un grupo específico (con info del grupo y evento)
+  async findBookingsByGroup(groupId: number): Promise<object> {
+    // buscamos el grupo con su evento y usuario
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['event', 'event.service', 'user'],
+    });
+    if (!group) throw new NotFoundException('Grupo no encontrado');
+
+    const bookings = await this.bookingRepository.find({
+      where: { group: { id: groupId } },
+    });
+    const activeBookings = bookings.filter((b) => b.status !== 'deleted');
+
+    return {
+      group_id: group.id,
+      confirmed: group.confirmed,
+      event_time: group.event.event_time,
+      service_name: group.event.service.name,
+      service_timezone: group.event.service.timezone,
+      guide_name: group.user?.name ?? null,
+      capacity: group.capacity,
+      total_pax: activeBookings.reduce((sum, b) => sum + b.pax, 0),
+      bookings: activeBookings,
+    };
+  }
+
   // HELPERS
 
   // método auxiliar para obtener los guías disponibles para un evento
@@ -506,30 +546,22 @@ export class GroupsService {
       );
   }
 
-  // método para obtener las reservas de un grupo específico (con info del grupo y evento)
-  async findBookingsByGroup(groupId: number): Promise<object> {
-    // buscamos el grupo con su evento y usuario
+  // método auxiliar para recalcular needs_attention de un grupo según su pax total y capacidad
+  private async recalculateGroupAttention(groupId: number): Promise<void> {
     const group = await this.groupRepository.findOne({
       where: { id: groupId },
-      relations: ['event', 'event.service', 'user'],
     });
-    if (!group) throw new NotFoundException('Grupo no encontrado');
+    if (!group || group.capacity === null) return;
 
     const bookings = await this.bookingRepository.find({
       where: { group: { id: groupId } },
     });
-    const activeBookings = bookings.filter((b) => b.status !== 'deleted');
+    const totalPax = bookings
+      .filter((b) => b.status !== 'deleted')
+      .reduce((sum, b) => sum + b.pax, 0);
 
-    return {
-      group_id: group.id,
-      confirmed: group.confirmed,
-      event_time: group.event.event_time,
-      service_name: group.event.service.name,
-      service_timezone: group.event.service.timezone,
-      guide_name: group.user?.name ?? null,
-      capacity: group.capacity,
-      total_pax: activeBookings.reduce((sum, b) => sum + b.pax, 0),
-      bookings: activeBookings,
-    };
+    await this.groupRepository.update(groupId, {
+      needs_attention: totalPax > group.capacity,
+    });
   }
 }
