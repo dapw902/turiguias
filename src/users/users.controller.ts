@@ -50,18 +50,18 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  // endpoint para borrar a un usuario
-  @Roles(UserRole.ADMIN)
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
-  }
-
   // endpoint para que el usuario logueado borre su propia cuenta
   @Roles(UserRole.ADMIN, UserRole.GUIDE)
   @Delete('me')
   deleteMe(@Request() req: { user: { id: number } }) {
     return this.usersService.deleteSelf(req.user.id);
+  }
+
+  // endpoint para borrar a un usuario
+  @Roles(UserRole.ADMIN)
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.remove(id);
   }
 
   // endpoint para crear a un usuario
