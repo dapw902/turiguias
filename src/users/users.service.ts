@@ -74,6 +74,11 @@ export class UsersService {
     await this.usersRepository.delete(id);
   }
 
+  // método para borrar la cuenta del usuario logueado
+  async deleteSelf(id: number): Promise<void> {
+    await this.remove(id);
+  }
+
   // método para crear nuevos usuarios
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // encriptación de la contraseña

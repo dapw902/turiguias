@@ -10,6 +10,7 @@ import {
   Body,
   Patch,
   Query,
+  Request,
 } from '@nestjs/common';
 // Importamos el servicio
 import { UsersService } from './users.service';
@@ -54,6 +55,13 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
+  }
+
+  // endpoint para que el usuario logueado borre su propia cuenta
+  @Roles(UserRole.ADMIN, UserRole.GUIDE)
+  @Delete('me')
+  deleteMe(@Request() req: { user: { id: number } }) {
+    return this.usersService.deleteSelf(req.user.id);
   }
 
   // endpoint para crear a un usuario
