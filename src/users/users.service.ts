@@ -15,6 +15,8 @@ import * as bcrypt from 'bcrypt';
 import { UserResponseDto } from './dto/user-response.dto';
 // dto para la paginación de resultados
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+// importamos la entidad Group
+import { Group } from '../groups/group.entity';
 
 @Injectable()
 export class UsersService {
@@ -24,6 +26,9 @@ export class UsersService {
     // sólo se puede usar dentro de esta clase y no se puede reasignar
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    // para actualizar los grupos cuando se borren users
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
   ) {}
 
   // método para obtener el listado entero de usuarios con paginación
@@ -70,6 +75,12 @@ export class UsersService {
         'No se puede eliminar el último administrador',
       );
     }
+
+    // si el usuario es guía, desconfirmamos y marcamos como needs_attention sus grupos
+    await this.groupRepository.update(
+      { user: { id } },
+      { confirmed: false, needs_attention: true },
+    );
 
     await this.usersRepository.delete(id);
   }
