@@ -41,6 +41,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         typeof message === 'object' && 'message' in message
           ? (message as { message: string }).message
           : message,
+      // pasamos affectedGroups si viene en la respuesta
+      ...(typeof message === 'object' && 'affectedGroups' in message
+        ? {
+            affectedGroups: (message as { affectedGroups: number })
+              .affectedGroups,
+          }
+        : {}),
       timestamp: new Date().toISOString(),
       path: request.url,
     });

@@ -1,8 +1,9 @@
 import {
   Injectable,
-  ConflictException,
   Inject,
   forwardRef,
+  NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +22,8 @@ import { DateTime } from 'luxon';
 import { GuideServicesService } from '../guide-services/guide-services.service';
 // dto para paginación
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+// importamos la entidad Group
+import { Group } from '../groups/group.entity';
 
 @Injectable()
 export class GuideAvailabilityService {
@@ -31,6 +34,9 @@ export class GuideAvailabilityService {
     // inyectamos GuideServicesService con forwardRef para evitar dependencia circular
     @Inject(forwardRef(() => GuideServicesService))
     private readonly guideServicesService: GuideServicesService,
+    // inyectamos el repositorio de la entidad "Group"
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
   ) {}
 
   // método para obtener el listado entero de las disponibilidades de los guías con paginación
@@ -134,8 +140,50 @@ export class GuideAvailabilityService {
     });
   }
 
-  // método para eliminar un servicio asociado a un guía
-  async remove(id: number): Promise<void> {
+  // método para borrar una disponibilidad
+  async remove(id: number, force: boolean = false): Promise<void> {
+    // buscamos la disponibilidad con el user
+    const availability = await this.guideAvailabilityRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+    if (!availability)
+      throw new NotFoundException('Disponibilidad no encontrada');
+
+    // buscamos grupos del guía que caigan dentro del rango de fechas de esta disponibilidad
+    const affectedGroups = await this.groupRepository
+      .createQueryBuilder('g')
+      .innerJoin('g.event', 'e')
+      .where('g.user_id = :userId', { userId: availability.user.id })
+      .andWhere('DATE(FROM_UNIXTIME(e.event_time)) >= :startDate', {
+        startDate: availability.start_date,
+      })
+      .andWhere('DATE(FROM_UNIXTIME(e.event_time)) <= :endDate', {
+        endDate: availability.end_date,
+      })
+      .getMany();
+
+    // si hay grupos afectados y no es force, devolvemos 409
+    if (affectedGroups.length > 0 && !force) {
+      throw new ConflictException({
+        statusCode: 409,
+        message: 'Esta disponibilidad tiene grupos asignados',
+        affectedGroups: affectedGroups.length,
+      });
+    }
+
+    // si es force y hay grupos, procedemos
+    if (affectedGroups.length > 0) {
+      // desasignamos el guía y marcamos needs_attention en los grupos afectados
+      for (const group of affectedGroups) {
+        await this.groupRepository.update(group.id, {
+          user: null,
+          confirmed: false,
+          needs_attention: true,
+        });
+      }
+    }
+
     await this.guideAvailabilityRepository.delete(id);
   }
 

@@ -7,11 +7,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GuideAvailability } from './guide-availability.entity';
 // importamos el módulo de Guide Services
 import { GuideServicesModule } from '../guide-services/guide-services.module';
+// importamos la entidad Group para poder actualizar grupos afectados al borrar disponibilidad
+import { Group } from '../groups/group.entity';
 
 @Module({
   // Indicamos qué entidad vamos a usar en este módulo
   imports: [
-    TypeOrmModule.forFeature([GuideAvailability]),
+    TypeOrmModule.forFeature([GuideAvailability, Group]),
     forwardRef(() => GuideServicesModule),
   ],
   providers: [GuideAvailabilityService],

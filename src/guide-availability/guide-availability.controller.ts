@@ -58,7 +58,10 @@ export class GuideAvailabilityController {
   // endpoint para borrar una disponibilidad
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.guideAvailabilityService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('force') force?: string,
+  ) {
+    return this.guideAvailabilityService.remove(id, force === 'true');
   }
 }
