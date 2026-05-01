@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 // Importamos InjectRepository - decorador para inyectar el repositorio de una entidad concreta
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +18,8 @@ import { GuideServiceByUserResponseDto } from './dto/guide-service-response.dto'
 import { ServicesService } from '../services/services.service';
 // dtop para paginación
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+// importamos la entidad de Groups
+import { Group } from '../groups/group.entity';
 
 @Injectable()
 export class GuideServicesService {
@@ -25,6 +28,8 @@ export class GuideServicesService {
     @InjectRepository(GuideService)
     private readonly guideServiceRepository: Repository<GuideService>,
     private readonly servicesService: ServicesService,
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
   ) {}
 
   // método para obtener el listado entero de las relaciones guía-servicio con paginación
@@ -139,6 +144,31 @@ export class GuideServicesService {
 
   // método para eliminar un servicio asociado a un guía
   async remove(id: number): Promise<void> {
+    // buscamos el servicio asignado con sus relaciones
+    const guideService = await this.guideServiceRepository.findOne({
+      where: { id },
+      relations: ['user', 'service'],
+    });
+    if (!guideService)
+      throw new NotFoundException('Servicio asignado no encontrado');
+
+    // verificamos que no haya grupos confirmados para este guía y servicio
+    const confirmedGroups = await this.groupRepository
+      .createQueryBuilder('g')
+      .innerJoin('g.event', 'e')
+      .where('g.user_id = :userId', { userId: guideService.user.id })
+      .andWhere('e.service_id = :serviceId', {
+        serviceId: guideService.service.id,
+      })
+      .andWhere('g.confirmed = :confirmed', { confirmed: true })
+      .getCount();
+
+    if (confirmedGroups > 0) {
+      throw new BadRequestException(
+        `No se puede borrar este servicio porque el guía tiene ${confirmedGroups} grupo/s confirmado/s. Reprograma los grupos antes de continuar.`,
+      );
+    }
+
     await this.guideServiceRepository.delete(id);
   }
 
