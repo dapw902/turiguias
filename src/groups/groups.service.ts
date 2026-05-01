@@ -461,6 +461,7 @@ export class GroupsService {
     return {
       group_id: group.id,
       confirmed: group.confirmed,
+      event_id: group.event.id,
       event_time: group.event.event_time,
       service_name: group.event.service.name,
       service_timezone: group.event.service.timezone,
