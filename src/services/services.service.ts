@@ -57,7 +57,10 @@ export class ServicesService {
     const products = await this.turitopService.getProducts();
 
     // transformamos los productos de TuriTop al formato del DTO
-    const servicesToSync = products.map((p) => SyncServiceDto.fromTuriTop(p));
+    // filtramos los que no tienen duración (no son tours válidos)
+    const servicesToSync = products
+      .map((p) => SyncServiceDto.fromTuriTop(p))
+      .filter((s) => s.duration > 0);
 
     // obtenemos todos los servicios que hay actualmente en la BBDD
     const existingServices = await this.servicesRepository.find();
