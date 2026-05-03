@@ -45,12 +45,14 @@ export class GroupsService {
     const event = await this.eventsService.findOne(eventId);
     if (!event) throw new Error('Evento no encontrado');
 
-    // buscamos las reservas del evento que no estén borradas
+    // buscamos las reservas del evento que no estén borradas y que no estén ya en un grupo confirmado
     const bookings = await this.bookingRepository.find({
       where: { event: { id: eventId } },
-      relations: ['event'],
+      relations: ['event', 'group'],
     });
-    const activeBookings = bookings.filter((b) => b.status !== 'deleted');
+    const activeBookings = bookings.filter(
+      (b) => b.status !== 'deleted' && (!b.group || !b.group.confirmed),
+    );
 
     /* logs temporales
     // console.log('Bookings encontrados:', bookings.length);
@@ -67,10 +69,24 @@ export class GroupsService {
     // buscamos los guías disponibles para este evento
     const availableGuides = await this.getAvailableGuidesForEvent(eventId);
 
+    // excluimos los guías que ya tienen un grupo confirmado en este evento
+    const confirmedGroups = await this.groupRepository.find({
+      where: { event: { id: eventId }, confirmed: true },
+      relations: ['user'],
+    });
+
+    const confirmedGuideIds = confirmedGroups
+      .filter((g) => g.user !== null)
+      .map((g) => g.user!.id);
+
+    const freeGuides = availableGuides.filter(
+      (g) => !confirmedGuideIds.includes(g.guide_id),
+    );
+
     // capacidad máxima entre los guías disponibles para determinar el tamaño de grupo
     const maxCapacity =
-      availableGuides.length > 0
-        ? Math.max(...availableGuides.map((g) => g.capacity))
+      freeGuides.length > 0
+        ? Math.max(...freeGuides.map((g) => g.capacity))
         : 0;
 
     // si no hay guías disponibles, agrupamos todo en un solo grupo con needs_attention
@@ -137,7 +153,7 @@ export class GroupsService {
 
     return {
       groups: proposedGroups,
-      available_guides: availableGuides,
+      available_guides: freeGuides,
       message: proposedGroups.some((g) => g.needs_attention)
         ? 'Una o más reservas superan la capacidad máxima del guía disponible. Ajusta la capacidad manualmente antes de confirmar.'
         : 'Grupos generados correctamente',
