@@ -85,28 +85,70 @@ export class TuritopService {
   }
 
   // método para sincronizar las reservas con la BBDD local
+  // itera por servicio y por día para evitar el límite de 100 reservas por llamada de TuriTop
   async getBookings(
     startDate: number,
     endDate: number,
+    productShortIds: string[], // lista de product_short_id de servicios activos
   ): Promise<TuriTopBooking[]> {
-    const response = await firstValueFrom(
-      this.httpService.post<TuriTopBookingsResponse>(
-        `${this.apiUrl}/booking/getbookings`,
-        {
-          data: {
-            filter: {
-              event_date_from: startDate,
-              event_date_to: endDate,
-              show_deleted: 0,
-            },
-            language_code: this.language,
-          },
-        },
-        this.headers,
-      ),
-    );
+    const allBookings: TuriTopBooking[] = [];
+    const seen = new Set<string>(); // deduplicación por si TuriTop repite alguna reserva
+    const limit = 100;
+    const oneDaySeconds = 24 * 60 * 60;
 
-    return response.data.data.bookings;
+    for (const productShortId of productShortIds) {
+      // iteramos día a día dentro del rango para no superar el límite de 100 por llamada
+      let dayStart = startDate;
+
+      while (dayStart < endDate) {
+        const dayEnd = Math.min(dayStart + oneDaySeconds, endDate);
+        let page = 1;
+
+        while (true) {
+          console.log(
+            `Fetching bookings: product=${productShortId}, day=${new Date(dayStart * 1000).toISOString().slice(0, 10)}, page=${page}`,
+          );
+
+          const response = await firstValueFrom(
+            this.httpService.post<TuriTopBookingsResponse>(
+              `${this.apiUrl}/booking/getbookings`,
+              {
+                data: {
+                  filter: {
+                    event_date_from: dayStart,
+                    event_date_to: dayEnd,
+                    product_short_id: productShortId,
+                    show_deleted: 0,
+                  },
+                  language_code: this.language,
+                  limit,
+                  page,
+                },
+              },
+              this.headers,
+            ),
+          );
+
+          const bookings = response.data.data.bookings;
+          // console.log(`  → ${bookings.length} bookings`);
+
+          for (const booking of bookings) {
+            if (!seen.has(booking.short_id)) {
+              seen.add(booking.short_id);
+              allBookings.push(booking);
+            }
+          }
+
+          if (bookings.length < limit) break;
+          if (page > 10) break; // límite de seguridad — 1000 reservas por servicio por día
+          page++;
+        }
+
+        dayStart += oneDaySeconds;
+      }
+    }
+
+    return allBookings;
   }
 
   // método auxiliar para el header de autenticación para todas las llamadas a TuriTop

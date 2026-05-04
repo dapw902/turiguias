@@ -13,6 +13,8 @@ import { EventsService } from '../events/events.service';
 import { SyncBookingDto } from './dto/sync-booking.dto';
 // dto para la paginación de resultados
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+// importamos ServicesService para obtener los servicios activos
+import { ServicesService } from '../services/services.service';
 
 @Injectable()
 export class BookingsService {
@@ -24,6 +26,8 @@ export class BookingsService {
     private readonly eventsService: EventsService,
     // inyectamos TuritopService para las llamadas a la API
     private readonly turitopService: TuritopService,
+    // inyectamos ServicesService para obtener los product IDs activos
+    private readonly servicesService: ServicesService,
   ) {}
 
   // método para sincronizar las reservas desde TuriTop
@@ -33,10 +37,23 @@ export class BookingsService {
     const now = Math.floor(Date.now() / 1000) - 3 * 24 * 60 * 60;
     const endDate = now + days * 24 * 60 * 60;
 
+    // obtenemos los servicios activos para iterar por producto y día
+    const services = await this.servicesService.findAllRaw();
+    const productShortIds = services
+      .filter((s) => s.active)
+      .map((s) => s.turitop_product_id);
+
     // obtenemos las reservas de TuriTop para ese rango
-    const bookings = await this.turitopService.getBookings(now, endDate);
-    /* log temporal para ver errores
+    const bookings = await this.turitopService.getBookings(
+      now,
+      endDate,
+      productShortIds,
+    );
+    /* log temporal para ver errores 
     console.log('Total bookings recibidos:', bookings.length);
+    console.log('Productos únicos:', [
+      ...new Set(bookings.map((b) => b.product_short_id)),
+    ]);
     console.log(
       'Deleted:',
       bookings.filter((b) => b.deleted).map((b) => b.short_id),
