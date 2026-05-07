@@ -102,11 +102,10 @@ export class TuritopService {
 
       while (dayStart < endDate) {
         const dayEnd = Math.min(dayStart + oneDaySeconds, endDate);
-        let page = 1;
 
         while (true) {
           console.log(
-            `Fetching bookings: product=${productShortId}, day=${new Date(dayStart * 1000).toISOString().slice(0, 10)}, page=${page}`,
+            `Fetching bookings: product=${productShortId}, day=${new Date(dayStart * 1000).toISOString().slice(0, 10)}`,
           );
 
           const response = await firstValueFrom(
