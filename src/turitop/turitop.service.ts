@@ -93,7 +93,6 @@ export class TuritopService {
   ): Promise<TuriTopBooking[]> {
     const allBookings: TuriTopBooking[] = [];
     const seen = new Set<string>(); // deduplicación por si TuriTop repite alguna reserva
-    const limit = 100;
     const oneDaySeconds = 24 * 60 * 60;
 
     for (const productShortId of productShortIds) {
@@ -103,44 +102,29 @@ export class TuritopService {
       while (dayStart < endDate) {
         const dayEnd = Math.min(dayStart + oneDaySeconds, endDate);
 
-        while (true) {
-          console.log(
-            `Fetching bookings: product=${productShortId}, day=${new Date(dayStart * 1000).toISOString().slice(0, 10)}`,
-          );
-
-          const response = await firstValueFrom(
-            this.httpService.post<TuriTopBookingsResponse>(
-              `${this.apiUrl}/booking/getbookings`,
-              {
-                data: {
-                  filter: {
-                    event_date_from: dayStart,
-                    event_date_to: dayEnd,
-                    product_short_id: productShortId,
-                    show_deleted: 0,
-                  },
-                  language_code: this.language,
-                  limit,
-                  page,
+        const response = await firstValueFrom(
+          this.httpService.post<TuriTopBookingsResponse>(
+            `${this.apiUrl}/booking/getbookings`,
+            {
+              data: {
+                filter: {
+                  event_date_from: dayStart,
+                  event_date_to: dayEnd,
+                  product_short_id: productShortId,
+                  show_deleted: 0,
                 },
+                language_code: this.language,
               },
-              this.headers,
-            ),
-          );
+            },
+            this.headers,
+          ),
+        );
 
-          const bookings = response.data.data.bookings;
-          // console.log(`  → ${bookings.length} bookings`);
-
-          for (const booking of bookings) {
-            if (!seen.has(booking.short_id)) {
-              seen.add(booking.short_id);
-              allBookings.push(booking);
-            }
+        for (const booking of response.data.data.bookings) {
+          if (!seen.has(booking.short_id)) {
+            seen.add(booking.short_id);
+            allBookings.push(booking);
           }
-
-          if (bookings.length < limit) break;
-          if (page > 10) break; // límite de seguridad — 1000 reservas por servicio por día
-          page++;
         }
 
         dayStart += oneDaySeconds;
