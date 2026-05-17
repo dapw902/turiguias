@@ -206,8 +206,8 @@ export class GuideAvailabilityService {
       .andWhere('ga.end_date >= DATE(FROM_UNIXTIME(:endTimestamp))', {
         endTimestamp,
       })
-      // la hora de inicio del guía es anterior a la hora de inicio del evento
-      .andWhere('ga.start_time < TIME(FROM_UNIXTIME(:startTimestamp))', {
+      // la hora de inicio del guía es igual o anterior a la hora de inicio del evento
+      .andWhere('ga.start_time <= TIME(FROM_UNIXTIME(:startTimestamp))', {
         startTimestamp,
       })
       // la hora de fin del guía es posterior o igual a la hora de fin del evento
