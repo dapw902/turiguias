@@ -236,7 +236,7 @@ export class GuideAvailabilityService {
       .andWhere('ga.end_date >= DATE(FROM_UNIXTIME(:eventEndTime))', {
         eventEndTime,
       })
-      .andWhere('ga.start_time < TIME(FROM_UNIXTIME(:eventTime))', {
+      .andWhere('ga.start_time <= TIME(FROM_UNIXTIME(:eventTime))', {
         eventTime,
       })
       .andWhere('ga.end_time >= TIME(FROM_UNIXTIME(:eventEndTime))', {
